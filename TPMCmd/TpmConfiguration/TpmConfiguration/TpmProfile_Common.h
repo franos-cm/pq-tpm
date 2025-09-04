@@ -45,7 +45,7 @@
 
 #define     SM4_128                     (NO  * ALG_SM4)
 
-#define ALG_CAMELLIA                ALG_YES
+#define ALG_CAMELLIA                ALG_NO
 
 #define     CAMELLIA_128                (YES * ALG_CAMELLIA)
 #define     CAMELLIA_192                (NO  * ALG_CAMELLIA)
@@ -157,7 +157,7 @@
 //***********************************************
 // Defines controlling ACT
 //***********************************************
-#define ACT_SUPPORT                         YES
+#define ACT_SUPPORT                         NO
 #define RH_ACT_0                                (YES * ACT_SUPPORT)
 #define RH_ACT_1                                ( NO * ACT_SUPPORT)
 #define RH_ACT_2                                ( NO * ACT_SUPPORT)

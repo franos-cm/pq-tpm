@@ -62,14 +62,20 @@
 #  define CURVE_448_KEY_SIZE 448
 
 // Derived ECC Value
-#  define ECC_CURVES                                                       \
-      {                                                                    \
-          TPM_ECC_NIST_P192, TPM_ECC_NIST_P224, TPM_ECC_NIST_P256,         \
-              TPM_ECC_NIST_P384, TPM_ECC_NIST_P521, TPM_ECC_BN_P256,       \
-              TPM_ECC_BN_P638, TPM_ECC_SM2_P256, TPM_ECC_BP_P256_R1,       \
-              TPM_ECC_BP_P384_R1, TPM_ECC_BP_P512_R1, TPM_ECC_CURVE_25519, \
-              TPM_ECC_CURVE_448                                            \
-      }
+#  define ECC_CURVES        \
+      {TPM_ECC_NIST_P192,   \
+       TPM_ECC_NIST_P224,   \
+       TPM_ECC_NIST_P256,   \
+       TPM_ECC_NIST_P384,   \
+       TPM_ECC_NIST_P521,   \
+       TPM_ECC_BN_P256,     \
+       TPM_ECC_BN_P638,     \
+       TPM_ECC_SM2_P256,    \
+       TPM_ECC_BP_P256_R1,  \
+       TPM_ECC_BP_P384_R1,  \
+       TPM_ECC_BP_P512_R1,  \
+       TPM_ECC_CURVE_25519, \
+       TPM_ECC_CURVE_448}
 
 #  define ECC_CURVE_COUNT                                                            \
       (ECC_NIST_P192 + ECC_NIST_P224 + ECC_NIST_P256 + ECC_NIST_P384 + ECC_NIST_P521 \
@@ -186,37 +192,68 @@
     MAX(CAMELLIA_MAX_KEY_SIZE_BITS, MAX(SM4_MAX_KEY_SIZE_BITS, AES_MAX_KEY_SIZE_BITS))
 #define MAX_SYM_KEY_BYTES ((MAX_SYM_KEY_BITS + 7) / 8)
 
-// Table "Defines for SHA1 Hash Values" (TCG Algorithm Registry)
-#define SHA1_DIGEST_SIZE 20
-#define SHA1_BLOCK_SIZE  64
+#ifndef SHA1_DIGEST_SIZE
+#  define SHA1_DIGEST_SIZE 20
+#endif
+#ifndef SHA1_BLOCK_SIZE
+#  define SHA1_BLOCK_SIZE 64
+#endif
 
 // Table "Defines for SHA256 Hash Values" (TCG Algorithm Registry)
-#define SHA256_DIGEST_SIZE 32
-#define SHA256_BLOCK_SIZE  64
+#ifndef SHA256_DIGEST_SIZE
+#  define SHA256_DIGEST_SIZE 32
+#endif
+#ifndef SHA256_BLOCK_SIZE
+#  define SHA256_BLOCK_SIZE 64
+#endif
 
 // Table "Defines for SHA384 Hash Values" (TCG Algorithm Registry)
-#define SHA384_DIGEST_SIZE 48
-#define SHA384_BLOCK_SIZE  128
+#ifndef SHA384_DIGEST_SIZE
+#  define SHA384_DIGEST_SIZE 48
+#endif
+#ifndef SHA384_BLOCK_SIZE
+#  define SHA384_BLOCK_SIZE 128
+#endif
 
 // Table "Defines for SHA512 Hash Values" (TCG Algorithm Registry)
-#define SHA512_DIGEST_SIZE 64
-#define SHA512_BLOCK_SIZE  128
+#ifndef SHA512_DIGEST_SIZE
+#  define SHA512_DIGEST_SIZE 64
+#endif
+#ifndef SHA512_BLOCK_SIZE
+#  define SHA512_BLOCK_SIZE 128
+#endif
 
 // Table "Defines for SM3_256 Hash Values" (TCG Algorithm Registry)
-#define SM3_256_DIGEST_SIZE 32
-#define SM3_256_BLOCK_SIZE  64
+#ifndef SM3_256_DIGEST_SIZE
+#  define SM3_256_DIGEST_SIZE 32
+#endif
+#ifndef SM3_256_BLOCK_SIZE
+#  define SM3_256_BLOCK_SIZE 64
+#endif
 
 // Table "Defines for SHA3_256 Hash Values" (TCG Algorithm Registry)
-#define SHA3_256_DIGEST_SIZE 32
-#define SHA3_256_BLOCK_SIZE  136
+#ifndef SHA3_256_DIGEST_SIZE
+#  define SHA3_256_DIGEST_SIZE 32
+#endif
+#ifndef SHA3_256_BLOCK_SIZE
+#  define SHA3_256_BLOCK_SIZE 136
+#endif
 
 // Table "Defines for SHA3_384 Hash Values" (TCG Algorithm Registry)
-#define SHA3_384_DIGEST_SIZE 48
-#define SHA3_384_BLOCK_SIZE  104
+#ifndef SHA3_384_DIGEST_SIZE
+#  define SHA3_384_DIGEST_SIZE 48
+#endif
+#ifndef SHA3_384_BLOCK_SIZE
+#  define SHA3_384_BLOCK_SIZE 104
+#endif
 
 // Table "Defines for SHA3_512 Hash Values" (TCG Algorithm Registry)
-#define SHA3_512_DIGEST_SIZE 64
-#define SHA3_512_BLOCK_SIZE  72
+#ifndef SHA3_512_DIGEST_SIZE
+#  define SHA3_512_DIGEST_SIZE 64
+#endif
+#ifndef SHA3_512_BLOCK_SIZE
+#  define SHA3_512_BLOCK_SIZE 72
+#endif
 
 // Derived Hash Values
 #define HASH_COUNT                                                                \
@@ -246,7 +283,9 @@
                             MAX((ALG_SHA256 * SHA256_DIGEST_SIZE), \
                                 (ALG_SHA1 * SHA1_DIGEST_SIZE))))))))
 
-#define MAX_DIGEST_SIZE MAX_HASH_DIGEST_SIZE
+#ifndef MAX_DIGEST_SIZE
+#  define MAX_DIGEST_SIZE MAX_HASH_DIGEST_SIZE
+#endif
 
 #if MAX_HASH_DIGEST_SIZE == 0 || MAX_HASH_BLOCK_SIZE == 0
 #  error "Hash data not valid"

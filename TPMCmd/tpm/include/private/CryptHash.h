@@ -8,6 +8,21 @@
 #ifndef _CRYPT_HASH_H
 #define _CRYPT_HASH_H
 
+/* Neutralize wolfSSL old-name compatibility macros that collide with
+ * struct/union member names (s->Sha512 becomes s->wc_Sha512 otherwise). */
+#ifdef Sha1
+#  undef Sha1
+#endif
+#ifdef Sha256
+#  undef Sha256
+#endif
+#ifdef Sha384
+#  undef Sha384
+#endif
+#ifdef Sha512
+#  undef Sha512
+#endif
+
 //** Hash-related Structures
 
 union SMAC_STATES;
@@ -122,7 +137,7 @@ typedef union
 typedef ANY_HASH_STATE*       PANY_HASH_STATE;
 typedef const ANY_HASH_STATE* PCANY_HASH_STATE;
 
-#define ALIGNED_SIZE(x, b) ((((x) + (b)-1) / (b)) * (b))
+#define ALIGNED_SIZE(x, b) ((((x) + (b) - 1) / (b)) * (b))
 // MAX_HASH_STATE_SIZE will change with each implementation. It is assumed that
 // a hash state will not be larger than twice the block size plus some
 // overhead (in this case, 16 bytes). The overall size needs to be as
@@ -219,21 +234,21 @@ typedef const struct HASH_DEF_STRUCT
 // Macro to fill in the HASH_DEF for an algorithm. For SHA1, the instance would be:
 //  HASH_DEF_TEMPLATE(Sha1, SHA1)
 // This handles the difference in capitalization for the various pieces.
-#define HASH_DEF_TEMPLATE(HASH, Hash)                               \
-    HASH_DEF Hash##_Def =                                           \
-        {{                                                          \
-             (HASH_START_METHOD*)&tpmHashStart_##HASH,              \
-             (HASH_DATA_METHOD*)&tpmHashData_##HASH,                \
-             (HASH_END_METHOD*)&tpmHashEnd_##HASH,                  \
-             (HASH_STATE_COPY_METHOD*)&tpmHashStateCopy_##HASH,     \
-             (HASH_STATE_EXPORT_METHOD*)&tpmHashStateExport_##HASH, \
-             (HASH_STATE_IMPORT_METHOD*)&tpmHashStateImport_##HASH, \
-         },                                                         \
-         HASH##_BLOCK_SIZE,  /*block size */                        \
-         HASH##_DIGEST_SIZE, /*data size */                         \
-         sizeof(tpmHashState##HASH##_t),                            \
-         TPM_ALG_##HASH,                                            \
-         OID_##HASH PKCS1_OID(HASH) ECDSA_OID(HASH)};
+#undef HASH_DEF_TEMPLATE
+#define HASH_DEF_TEMPLATE(HASH, Hash)                          \
+    HASH_DEF Hash##_Def = {{                                   \
+                               tpmHashStart_##HASH,            \
+                               tpmHashData_##HASH,             \
+                               tpmHashEnd_##HASH,              \
+                               tpmHashStateCopy_##HASH,        \
+                               tpmHashStateExport_##HASH,      \
+                               tpmHashStateImport_##HASH,      \
+                           },                                  \
+                           HASH##_BLOCK_SIZE,  /*block size */ \
+                           HASH##_DIGEST_SIZE, /*data size */  \
+                           sizeof(tpmHashState##HASH##_t),     \
+                           TPM_ALG_##HASH,                     \
+                           OID_##HASH PKCS1_OID(HASH) ECDSA_OID(HASH)};
 
 // These definitions are for the types that can be in a hash state structure.
 // These types are used in the cryptographic utilities. This is a define rather than

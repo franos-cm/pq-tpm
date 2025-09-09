@@ -49,12 +49,12 @@
 // macros will make sure that it is set correctly. A simulated TPM would include a
 // Virtual TPM. The interfaces for a Virtual TPM should be modified from the standard
 // ones in the Simulator project.
-#define SIMULATION                  YES
+#define SIMULATION                  NO
 
 
 // The CRYPTO_LIB_REPORTING switch allows the TPM to report its
 // crypto library implementation, e.g., at simulation startup.
-#define CRYPTO_LIB_REPORTING        YES
+#define CRYPTO_LIB_REPORTING        NO
 
 // If doing debug, can set the DRBG to print out the intermediate test values.
 // Before enabling this, make sure that the dbgDumpMemBlock() function
@@ -204,7 +204,7 @@
 
 // If an assertion event is not going to produce any trace information (function and
 // line number) then make FAIL_TRACE == NO
-#define FAIL_TRACE                  YES
+#define FAIL_TRACE                  NO
 
 // TODO_RENAME_INC_FOLDER: public refers to the TPM_CoreLib public headers
 #include <public/CompilerDependencies.h>

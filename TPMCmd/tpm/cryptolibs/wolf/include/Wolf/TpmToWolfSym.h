@@ -57,9 +57,17 @@ typedef void (*TpmCryptSetSymKeyCall_t)(void* keySchedule, BYTE* out, const BYTE
 // When using these calls, to call the AES block encryption code, the caller
 // should use:
 //      TpmCryptEncryptAES(SWIZZLE(keySchedule, in, out));
-#define TpmCryptEncryptAES wc_AesEncryptDirect
-#define TpmCryptDecryptAES wc_AesDecryptDirect
-#define tpmKeyScheduleAES  Aes
+#if !defined(TPM_WOLFSSL_AES_WRAPPERS)
+#  ifndef TpmCryptEncryptAES
+#    define TpmCryptEncryptAES wc_AesEncryptDirect
+#  endif
+#  ifndef TpmCryptDecryptAES
+#    define TpmCryptDecryptAES wc_AesDecryptDirect
+#  endif
+#endif
+#ifndef tpmKeyScheduleAES
+#  define tpmKeyScheduleAES Aes
+#endif
 
 typedef union tpmCryptKeySchedule_t tpmCryptKeySchedule_t;
 

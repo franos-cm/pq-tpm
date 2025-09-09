@@ -101,9 +101,9 @@
 #define     ECC_NIST_P256                   (YES * ALG_ECC)
 #define     ECC_NIST_P384                   (YES * ALG_ECC)
 #define     ECC_NIST_P521                   (YES * ALG_ECC)
-#define     ECC_BN_P256                     (YES * ALG_ECC)
-#define     ECC_BN_P638                     (YES * ALG_ECC)
-#define     ECC_SM2_P256                    (YES * ALG_ECC)
+#define     ECC_BN_P256                     (NO  * ALG_ECC)
+#define     ECC_BN_P638                     (NO  * ALG_ECC)
+#define     ECC_SM2_P256                    (NO  * ALG_ECC)
 
 #define     ECC_BP_P256_R1                  (NO * ALG_ECC)
 #define     ECC_BP_P384_R1                  (NO * ALG_ECC)

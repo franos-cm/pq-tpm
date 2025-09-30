@@ -2,6 +2,7 @@
 //* Includes and Typedefs
 #include "Tpm.h"
 #include "Marshal.h"
+#include "transport.h"
 
 #if TABLE_DRIVEN_DISPATCH || TABLE_DRIVEN_MARSHAL
 
@@ -349,6 +350,7 @@ Exit:
         result = TPM_RC_SIZE;
         goto Exit;
     }
+    debug_breakpoint(0x86);
 
     // The command parameter unmarshaling stopped when it hit a value that was out
     // of range for unmarshaling values and left *types pointing to the first
@@ -373,8 +375,12 @@ Exit:
         else
             result = cmd.noArgs();
     }
+    debug_breakpoint(0x87);
     if(result != TPM_RC_SUCCESS)
+    {
+        debug_breakpoint(0x88);
         goto Exit;
+    }
 
     // Offset in the marshaled output structure
     offset = 0;
@@ -415,9 +421,13 @@ Exit:
 #  endif
         offset = *offsets++;
     }
+    debug_breakpoint(0x89);
     result = (maxOutSize < 0) ? TPM_RC_FAILURE : TPM_RC_SUCCESS;
+    debug_breakpoint(0x8A);
 Exit:
+    debug_breakpoint(0x8B);
     MemoryIoBufferZero();
+    debug_breakpoint(0x8C);
     return result;
 #endif
 }

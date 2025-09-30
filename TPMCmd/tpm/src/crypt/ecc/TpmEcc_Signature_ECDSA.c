@@ -140,7 +140,9 @@ TpmEcc_ValidateSignatureEcdsa(
     TPM_RC           retVal = TPM_RC_SIGNATURE;
     //
     // Get adjusted digest
+    debug_breakpoint(0x85);
     TpmEcc_AdjustEcdsaDigest(bnE, digest, order);
+    debug_breakpoint(0x70);
     // 1. If r and s are not both integers in the interval [1, n - 1], output
     //    INVALID.
     //  bnR  and bnS were validated by the caller
@@ -149,27 +151,48 @@ TpmEcc_ValidateSignatureEcdsa(
     // 3. Convert the bit string H0 to an integer e as described in Appendix B.2.
     // Done at entry
     // 4. Compute w = (s')^-1 mod n, using the routine in Appendix B.1.
-    if(!ExtMath_ModInverse(bnW, bnS, order))
+    BOOL var1 = !ExtMath_ModInverse(bnW, bnS, order);
+    debug_breakpoint(0x71);
+    if(var1)
+    {
+        debug_breakpoint(0x72);
         goto Exit;
+    }
     // 5. Compute u1 = (e' *   w) mod n, and compute u2 = (r' *  w) mod n.
+    debug_breakpoint(0x73);
     ExtMath_ModMult(bnU1, bnE, bnW, order);
+    debug_breakpoint(0x74);
     ExtMath_ModMult(bnU2, bnR, bnW, order);
     // 6. Compute the elliptic curve point R = (xR, yR) = u1G+u2Q, using EC
     //    scalar multiplication and EC addition (see [Routines]). If R is equal to
     //    the point at infinity O, output INVALID.
-    if(TpmEcc_PointMult(
-           ecR, ExtEcc_CurveGetG(ExtEcc_CurveGetCurveId(E)), bnU1, ecQ, bnU2, E)
-       != TPM_RC_SUCCESS)
+    debug_breakpoint(0x75);
+    TPM_RC var2 = TpmEcc_PointMult(
+        ecR, ExtEcc_CurveGetG(ExtEcc_CurveGetCurveId(E)), bnU1, ecQ, bnU2, E);
+    debug_breakpoint(0x76);
+    if(var2 != TPM_RC_SUCCESS)
+    {
+        debug_breakpoint(0x77);
         goto Exit;
+    }
     // 7. Compute v = Rx mod n.
+    debug_breakpoint(0x78);
     ExtMath_Copy(bnV, ExtEcc_PointX(ecR));
+    debug_breakpoint(0x79);
     ExtMath_Mod(bnV, order);
+    debug_breakpoint(0x7A);
     // 8. Compare v and r0. If v = r0, output VALID; otherwise, output INVALID
-    if(ExtMath_UnsignedCmp(bnV, bnR) != 0)
+    int var3 = ExtMath_UnsignedCmp(bnV, bnR);
+    debug_breakpoint(0x7B);
+    if(var3 != 0)
+    {
+        debug_breakpoint(0x7C);
         goto Exit;
+    }
 
     retVal = TPM_RC_SUCCESS;
 Exit:
+    debug_breakpoint(0x7D);
     return retVal;
 }
 

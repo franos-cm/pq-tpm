@@ -3,6 +3,7 @@
 // bignum_t types.
 
 #include "TpmBigNum.h"
+#include "transport.h"
 
 // Note - these were moved out of TPM_INLINE to build correctly on GCC.  On MSVC
 // link time code generation correctly handles the inline versions, but
@@ -387,12 +388,14 @@ LIB_EXPORT BOOL ExtEcc_PointMultiplyAndAdd(Crypt_Point*          R,
                                            const Crypt_Int*      u,
                                            const Crypt_EccCurve* E)
 {
+    debug_breakpoint(0x90);
     return BnEccModMult2((bigPoint)R,
                          (pointConst)S,
                          (bigConst)d,
                          (pointConst)Q,
                          (bigConst)u,
                          (bigCurveData*)E);
+    debug_breakpoint(0x9F);
 }
 
 LIB_EXPORT BOOL ExtEcc_PointAdd(Crypt_Point*          R,

@@ -143,16 +143,24 @@ LIB_EXPORT TPM_RC CryptEccValidateSignature(
     TpmMath_IntFrom2B(bnS, &signature->signature.ecdsa.signatureS.b);
 
     // r and s have to be greater than 0 but less than the curve order
-    if(ExtMath_IsZero(bnR) || ExtMath_IsZero(bnS))
-        ERROR_EXIT(TPM_RC_SIGNATURE);
-    if((ExtMath_UnsignedCmp(bnS, order) >= 0)
-       || (ExtMath_UnsignedCmp(bnR, order) >= 0))
+    BOOL var1 = ExtMath_IsZero(bnR);
+    BOOL var2 = ExtMath_IsZero(bnS);
+
+    if(var1 || var2)
         ERROR_EXIT(TPM_RC_SIGNATURE);
 
+    int var3 = ExtMath_UnsignedCmp(bnS, order);
+    int var4 = ExtMath_UnsignedCmp(bnR, order);
+    if((var3 >= 0) || (var4 >= 0))
+        ERROR_EXIT(TPM_RC_SIGNATURE);
+
+    debug_breakpoint(0x80);
     switch(signature->sigAlg)
     {
         case TPM_ALG_ECDSA:
+            debug_breakpoint(0x81);
             retVal = TpmEcc_ValidateSignatureEcdsa(bnR, bnS, E, ecQ, digest);
+            debug_breakpoint(0x82);
             break;
 
 #  if ALG_ECSCHNORR
@@ -170,7 +178,9 @@ LIB_EXPORT TPM_RC CryptEccValidateSignature(
             FAIL(FATAL_ERROR_INTERNAL);
     }
 Exit:
+    debug_breakpoint(0x83);
     CRYPT_CURVE_FREE(E);
+    debug_breakpoint(0x84);
     return retVal;
 }
 

@@ -204,7 +204,7 @@
 
 // If an assertion event is not going to produce any trace information (function and
 // line number) then make FAIL_TRACE == NO
-#define FAIL_TRACE                  NO
+#define FAIL_TRACE                  YES
 
 // TODO_RENAME_INC_FOLDER: public refers to the TPM_CoreLib public headers
 #include <public/CompilerDependencies.h>

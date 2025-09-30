@@ -7,6 +7,7 @@
 
 #include "Tpm.h"
 #include "Marshal.h"
+#include "transport.h"
 // TODO_RENAME_INC_FOLDER:platform_interface refers to the TPM_CoreLib platform interface
 #include <platform_interface/prototypes/ExecCommand_fp.h>
 
@@ -57,6 +58,7 @@ LIB_EXPORT void ExecuteCommand(
     unsigned char** response       // IN/OUT: response buffer
 )
 {
+    debug_breakpoint(0x01);
     // Command local variables
     UINT32  commandSize;
     COMMAND command;
@@ -89,7 +91,9 @@ LIB_EXPORT void ExecuteCommand(
     // Specifically, if NV is available when the command execution starts and then
     // is not available later when it is necessary to write to NV, then the TPM
     // will go into failure mode.
+    debug_breakpoint(0x02);
     NvCheckState();
+    debug_breakpoint(0x03);
 
     // Due to the limitations of the simulation, TPM clock must be explicitly
     // synchronized with the system clock whenever a command is received.
@@ -97,6 +101,7 @@ LIB_EXPORT void ExecuteCommand(
     // a snapshot of the hardware timer at the beginning of the command allows
     // the time value to be consistent for the duration of the command execution.
     TimeUpdateToCurrent();
+    debug_breakpoint(0x04);
 
     // Any command through this function will unceremoniously end the
     // _TPM_Hash_Data/_TPM_Hash_End sequence.
@@ -104,6 +109,7 @@ LIB_EXPORT void ExecuteCommand(
         ObjectTerminateEvent();
 
     // Get command buffer size and command buffer.
+    debug_breakpoint(0x05);
     command.parameterBuffer = request;
     command.parameterSize   = requestSize;
 
@@ -112,11 +118,13 @@ LIB_EXPORT void ExecuteCommand(
     // that it is either TPM_ST_SESSIONS or TPM_ST_NO_SESSIONS.
     result = TPMI_ST_COMMAND_TAG_Unmarshal(
         &command.tag, &command.parameterBuffer, &command.parameterSize);
+    debug_breakpoint(0x06);
     if(result != TPM_RC_SUCCESS)
         goto Cleanup;
     // Unmarshal the commandSize indicator.
     result = UINT32_Unmarshal(
         &commandSize, &command.parameterBuffer, &command.parameterSize);
+    debug_breakpoint(0x07);
     if(result != TPM_RC_SUCCESS)
         goto Cleanup;
     // On a TPM that receives bytes on a port, the number of bytes that were
@@ -132,14 +140,21 @@ LIB_EXPORT void ExecuteCommand(
         goto Cleanup;
     }
     // Unmarshal the command code.
+    debug_breakpoint(0x08);
     result = TPM_CC_Unmarshal(
         &command.code, &command.parameterBuffer, &command.parameterSize);
+    debug_breakpoint(0x09);
     if(result != TPM_RC_SUCCESS)
+    {
+        debug_breakpoint(0x0A);
         goto Cleanup;
+    }
     // Check to see if the command is implemented.
     command.index = CommandCodeToCommandIndex(command.code);
+    debug_breakpoint(0x0B);
     if(UNIMPLEMENTED_COMMAND_INDEX == command.index)
     {
+        debug_breakpoint(0x0C);
         result = TPM_RC_COMMAND_CODE;
         goto Cleanup;
     }
@@ -159,28 +174,41 @@ LIB_EXPORT void ExecuteCommand(
         if((!TPMIsStarted() && command.code != TPM_CC_Startup)
            || (TPMIsStarted() && command.code == TPM_CC_Startup))
         {
+            debug_breakpoint(0x0D);
             result = TPM_RC_INITIALIZE;
             goto Cleanup;
         }
     // Start regular command process.
+    debug_breakpoint(0x0F);
     NvIndexCacheInit();
+    debug_breakpoint(0x10);
     // Parse Handle buffer.
     result = ParseHandleBuffer(&command);
+    debug_breakpoint(0x11);
     if(result != TPM_RC_SUCCESS)
+    {
+        debug_breakpoint(0x12);
         goto Cleanup;
+    }
     // All handles in the handle area are required to reference TPM-resident
     // entities.
+    debug_breakpoint(0x13);
     result = EntityGetLoadStatus(&command);
+    debug_breakpoint(0x14);
     if(result != TPM_RC_SUCCESS)
         goto Cleanup;
+    debug_breakpoint(0x15);
     // Authorization session handling for the command.
     ClearCpRpHashes(&command);
+    debug_breakpoint(0x16);
     if(command.tag == TPM_ST_SESSIONS)
     {
+        debug_breakpoint(0x17);
         // Find out session buffer size.
         result = UINT32_Unmarshal((UINT32*)&command.authSize,
                                   &command.parameterBuffer,
                                   &command.parameterSize);
+        debug_breakpoint(0x18);
         if(result != TPM_RC_SUCCESS)
             goto Cleanup;
         // Perform sanity check on the unmarshaled value. If it is smaller than
@@ -190,6 +218,7 @@ LIB_EXPORT void ExecuteCommand(
         // sessions are unmarshaled.
         if(command.authSize < 9 || command.authSize > command.parameterSize)
         {
+            debug_breakpoint(0x19);
             result = TPM_RC_SIZE;
             goto Cleanup;
         }
@@ -199,19 +228,25 @@ LIB_EXPORT void ExecuteCommand(
         // As the sessions are parsed command.parameterBuffer is advanced so, on a
         // successful return, command.parameterBuffer should be pointing at the
         // first byte of the parameters.
+        debug_breakpoint(0x1A);
         result = ParseSessionBuffer(&command);
+        debug_breakpoint(0x1B);
         if(result != TPM_RC_SUCCESS)
             goto Cleanup;
     }
     else
     {
+        debug_breakpoint(0x1C);
         command.authSize = 0;
         // The command has no authorization sessions.
         // If the command requires authorizations, then CheckAuthNoSession() will
         // return an error.
         result = CheckAuthNoSession(&command);
+        debug_breakpoint(0x1D);
         if(result != TPM_RC_SUCCESS)
+        {
             goto Cleanup;
+        }
     }
     // Set up the response buffer pointers. CommandDispatch will marshal the
     // response parameters starting at the address in command.responseBuffer.
@@ -220,6 +255,7 @@ LIB_EXPORT void ExecuteCommand(
     command.responseBuffer = *response + STD_RESPONSE_HEADER;
 
     // leave space for the parameter size field if needed
+    debug_breakpoint(0x1F);
     if(command.tag == TPM_ST_SESSIONS)
         command.responseBuffer += sizeof(UINT32);
     if(IsHandleInResponse(command.index))
@@ -253,6 +289,7 @@ Cleanup:
     // RAM whenever an "evict" object handle is used in a command so that the
     // access to any object is the same. These temporary objects need to be
     // cleared from RAM whether the command succeeds or fails.
+    debug_breakpoint(0x1E);
     ObjectCleanupEvict();
 
     // The parameters and sessions have been marshaled. Now tack on the header and
@@ -267,9 +304,13 @@ Cleanup:
     if((g_updateNV != UT_NONE) && !g_inFailureMode)
     {
         if(g_updateNV == UT_ORDERLY)
+        {
             NvUpdateIndexOrderlyData();
+        }
         if(!NvCommit())
+        {
             FAIL(FATAL_ERROR_INTERNAL);
+        }
         g_updateNV = UT_NONE;
     }
     pAssert((UINT32)command.parameterSize <= maxResponse);

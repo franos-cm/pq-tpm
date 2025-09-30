@@ -22,7 +22,11 @@
 #  include "BnConvert_fp.h"
 #  include "Wolf/BnToWolfMath_fp.h"
 
-#  define WOLF_HALF_RADIX (RADIX_BITS == 64 && !defined(FP_64BIT))
+#  if (RADIX_BITS == 64) && !defined(FP_64BIT)
+#    define WOLF_HALF_RADIX 1
+#  else
+#    define WOLF_HALF_RADIX 0
+#  endif
 
 //** Functions
 
@@ -126,7 +130,7 @@ BOOL BnMathLibraryCompatibilityCheck(void)
     // Convert the test TPM2B to a bigNum
     BnFrom2B(tpmTemp, &test.b);
     MP_INITIALIZED(wolfTemp, tpmTemp);
-    (wolfTemp);  // compiler warning
+    (void)(wolfTemp);  // compiler warning
     // Make sure the values are consistent
     GOTO_ERROR_UNLESS(wolfTemp->used * sizeof(fp_digit)
                       == (int)tpmTemp->size * sizeof(crypt_uword_t));
@@ -381,31 +385,53 @@ LIB_EXPORT BOOL BnEccModMult2(bigPoint            R,  // OUT: computed point
                               const bigCurveData* E   // IN: curve
 )
 {
+    debug_breakpoint(0x91);
     WOLF_ENTER();
     BOOL OK;
+    debug_breakpoint(0x92);
     POINT_CREATE(pR, NULL);
     POINT_CREATE(pS, NULL);
     POINT_CREATE(pQ, Q);
+    debug_breakpoint(0x93);
     MP_INITIALIZED(bnD, d);
     MP_INITIALIZED(bnU, u);
-    MP_INITIALIZED(bnPrime, BnCurveGetPrime(AccessCurveConstants(E)));
-    MP_INITIALIZED(bnA, BnCurveGet_a(AccessCurveConstants(E)));
+    debug_breakpoint(0x94);
+    bigConst var1 = BnCurveGetPrime(AccessCurveConstants(E));
+    debug_breakpoint(0x95);
+    MP_INITIALIZED(bnPrime, var1);
+    debug_breakpoint(0x96);
+    bigConst var2 = BnCurveGet_a(AccessCurveConstants(E));
+    debug_breakpoint(0x97);
+    MP_INITIALIZED(bnA, var2);
 
     if(S == NULL)
+    {
+        debug_breakpoint(0x98);
         S = BnCurveGetG(AccessCurveConstants(E));
+    }
+    debug_breakpoint(0x99);
     PointToWolf(pS, S);
+    debug_breakpoint(0x9A);
 
-    OK = (ecc_mul2add(pS, bnD, pQ, bnU, pR, bnA, bnPrime, NULL) == MP_OKAY);
+    int var3 = ecc_mul2add(pS, bnD, pQ, bnU, pR, bnA, bnPrime, NULL);
+
+    debug_breakpoint(0x9B);
+
+    OK = (var3 == MP_OKAY);
     if(OK)
     {
+        debug_breakpoint(0x9C);
         PointFromWolf(R, pR);
     }
+    debug_breakpoint(0x9D);
 
     POINT_DELETE(pS);
     POINT_DELETE(pQ);
     POINT_DELETE(pR);
+    debug_breakpoint(0x9E);
 
     WOLF_LEAVE();
+    debug_breakpoint(0x9E);
     return !BnEqualZero(R->z);
 }
 

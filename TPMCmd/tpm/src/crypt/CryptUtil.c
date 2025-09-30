@@ -1064,6 +1064,7 @@ CryptCreateObject(OBJECT*                object,  // IN: new object structure po
     TPM_RC          result     = TPM_RC_SUCCESS;
     //
     // Set the sensitive type for the object
+    debug_breakpoint(0xA1);
     sensitive->sensitiveType = publicArea->type;
 
     // For all objects, copy the initial authorization data
@@ -1076,70 +1077,96 @@ CryptCreateObject(OBJECT*                object,  // IN: new object structure po
 
     // Generate the key and unique fields for the asymmetric keys and just the
     // sensitive value for symmetric object
+    debug_breakpoint(0xA2);
     switch(publicArea->type)
     {
 #if ALG_RSA
         // Create RSA key
         case TPM_ALG_RSA:
+            debug_breakpoint(0xA3);
             // RSA uses full object so that it has a place to put the private
             // exponent
             result = CryptRsaGenerateKey(publicArea, sensitive, rand);
+            debug_breakpoint(0xA4);
             break;
 #endif  // ALG_RSA
 
 #if ALG_ECC
         // Create ECC key
         case TPM_ALG_ECC:
+            debug_breakpoint(0xA5);
             result = CryptEccGenerateKey(publicArea, sensitive, rand);
+            debug_breakpoint(0xA6);
             break;
 #endif  // ALG_ECC
         case TPM_ALG_SYMCIPHER:
+            debug_breakpoint(0xA7);
             result = CryptGenerateKeySymmetric(
                 publicArea, sensitive, sensitiveCreate, rand);
+            debug_breakpoint(0xA8);
             break;
         case TPM_ALG_KEYEDHASH:
+            debug_breakpoint(0xA9);
             result =
                 CryptGenerateKeyedHash(publicArea, sensitive, sensitiveCreate, rand);
+            debug_breakpoint(0xAA);
             break;
         default:
+            debug_breakpoint(0xAB);
             FAIL(FATAL_ERROR_INTERNAL);
             break;
     }
     if(result != TPM_RC_SUCCESS)
         return result;
+    debug_breakpoint(0xAC);
     // Create the sensitive seed value
     // If this is a primary key in the endorsement hierarchy, stir the DRBG state
     // This implementation uses both shProof and ehProof to make sure that there
     // is no leakage of either.
     if(object->attributes.primary && object->attributes.epsHierarchy)
     {
+        debug_breakpoint(0xAD);
         DRBG_AdditionalData((DRBG_STATE*)rand, &gp.shProof.b);
+        debug_breakpoint(0xAF);
         DRBG_AdditionalData((DRBG_STATE*)rand, &gp.ehProof.b);
+        debug_breakpoint(0xB0);
     }
     // Generate a seedValue that is the size of the digest produced by nameAlg
+    debug_breakpoint(0xB1);
     sensitive->seedValue.t.size =
         DRBG_Generate(rand,
                       sensitive->seedValue.t.buffer,
                       CryptHashGetDigestSize(publicArea->nameAlg));
+    debug_breakpoint(0xB2);
     if(g_inFailureMode)
         return TPM_RC_FAILURE;
     else if(sensitive->seedValue.t.size == 0)
         return TPM_RC_NO_RESULT;
+    debug_breakpoint(0xB3);
     // For symmetric objects, need to compute the unique value for the public area
     if(publicArea->type == TPM_ALG_SYMCIPHER || publicArea->type == TPM_ALG_KEYEDHASH)
     {
+        debug_breakpoint(0xB4);
         CryptComputeSymmetricUnique(publicArea, sensitive, &publicArea->unique.sym);
+        debug_breakpoint(0xB5);
     }
     else
     {
+        debug_breakpoint(0xB6);
         // if this is an asymmetric key and it isn't a parent, then
         // get rid of the seed.
         if(IS_ATTRIBUTE(publicArea->objectAttributes, TPMA_OBJECT, sign)
            || !IS_ATTRIBUTE(publicArea->objectAttributes, TPMA_OBJECT, restricted))
+        {
+            debug_breakpoint(0xB7);
             memset(&sensitive->seedValue, 0, sizeof(sensitive->seedValue));
+            debug_breakpoint(0xB8);
+        }
     }
     // Compute the name
+    debug_breakpoint(0xB9);
     PublicMarshalAndComputeName(publicArea, &object->name);
+    debug_breakpoint(0xBA);
     return result;
 }
 

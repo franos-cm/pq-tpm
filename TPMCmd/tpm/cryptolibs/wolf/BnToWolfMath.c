@@ -22,7 +22,11 @@
 #  include "BnConvert_fp.h"
 #  include "Wolf/BnToWolfMath_fp.h"
 
-#  define WOLF_HALF_RADIX (RADIX_BITS == 64 && !defined(FP_64BIT))
+#  if (RADIX_BITS == 64) && !defined(FP_64BIT)
+#    define WOLF_HALF_RADIX 1
+#  else
+#    define WOLF_HALF_RADIX 0
+#  endif
 
 //** Functions
 
@@ -126,7 +130,7 @@ BOOL BnMathLibraryCompatibilityCheck(void)
     // Convert the test TPM2B to a bigNum
     BnFrom2B(tpmTemp, &test.b);
     MP_INITIALIZED(wolfTemp, tpmTemp);
-    (wolfTemp);  // compiler warning
+    (void)(wolfTemp);  // compiler warning
     // Make sure the values are consistent
     GOTO_ERROR_UNLESS(wolfTemp->used * sizeof(fp_digit)
                       == (int)tpmTemp->size * sizeof(crypt_uword_t));

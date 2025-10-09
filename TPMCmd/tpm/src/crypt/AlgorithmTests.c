@@ -6,6 +6,7 @@
 
 //** Includes and Defines
 #include "Tpm.h"
+#include "transport.h"
 
 #define SELF_TEST_DATA
 
@@ -19,6 +20,7 @@
 #  include "EccTestData.h"
 #  include "HashTestData.h"
 #  include "KdfTestData.h"
+#  include "transport.h"
 
 #  define TEST_DEFAULT_TEST_HASH(vector)        \
       if(TEST_BIT(DEFAULT_TEST_HASH, g_toTest)) \
@@ -84,15 +86,24 @@ static TPM_RC TestHash(TPM_ALG_ID hashAlg, ALGORITHM_VECTOR* toTest)
 
     // Set the HMAC key to twice the digest size
     digestSize = CryptHashGetDigestSize(hashAlg);
+    // marker
     CryptHmacStart(&state, hashAlg, digestSize * 2, (BYTE*)c_hashTestKey.t.buffer);
     CryptDigestUpdate(&state.hashState,
                       2 * CryptHashGetBlockSize(hashAlg),
                       (BYTE*)c_hashTestData.t.buffer);
     computed.t.size = digestSize;
+
     CryptHmacEnd(&state, digestSize, computed.t.buffer);
-    if((testDigest->size != computed.t.size)
-       || (memcmp(testDigest->buffer, computed.t.buffer, computed.b.size) != 0))
+
+    int res = memcmp(testDigest->buffer, computed.t.buffer, computed.b.size);
+
+    if((testDigest->size != computed.t.size) || (res != 0))
+    {
+        // TODO: problem is here
+        debug_breakpoint(0xF5);
         SELF_TEST_FAILURE;
+    }
+    debug_breakpoint(0xF6);
     return TPM_RC_SUCCESS;
 }
 
@@ -552,14 +563,26 @@ static TPM_RC TestECDH(TPM_ALG_ID        scheme,  // IN: for consistency
     TPM_RC                     result = TPM_RC_SUCCESS;
     //
     NOT_REFERENCED(scheme);
+
     CLEAR_BOTH(TPM_ALG_ECDH);
+
     LoadEccParameter(&ds, &c_ecTestKey_ds);
+
     LoadEccPoint(&Qe, &c_ecTestKey_QeX, &c_ecTestKey_QeY);
+
     if(TPM_RC_SUCCESS != CryptEccPointMultiply(&Z, c_testCurve, &Qe, &ds, NULL, NULL))
+    {
+
         SELF_TEST_FAILURE;
+    }
+
     if(!MemoryEqual2B(&c_ecTestEcdh_X.b, &Z.x.b)
        || !MemoryEqual2B(&c_ecTestEcdh_Y.b, &Z.y.b))
+    {
+
         SELF_TEST_FAILURE;
+    }
+
     return result;
 }
 
@@ -576,15 +599,20 @@ static TPM_RC TestEccSignAndVerify(TPM_ALG_ID scheme, ALGORITHM_VECTOR* toTest)
     eccScheme.scheme                 = scheme;
     eccScheme.details.anySig.hashAlg = DEFAULT_TEST_HASH;
 
+    debug_breakpoint(0x63);
     CLEAR_BOTH(scheme);
     CLEAR_BOTH(TPM_ALG_ECDH);
+    debug_breakpoint(0x64);
 
     // ECC signature verification testing uses a KVT.
     switch(scheme)
     {
         case TPM_ALG_ECDSA:
+            debug_breakpoint(0x65);
             LoadEccParameter(&testSig.signature.ecdsa.signatureR, &c_TestEcDsa_r);
+            debug_breakpoint(0x66);
             LoadEccParameter(&testSig.signature.ecdsa.signatureS, &c_TestEcDsa_s);
+            debug_breakpoint(0x67);
             break;
         case TPM_ALG_ECSCHNORR:
             LoadEccParameter(&testSig.signature.ecschnorr.signatureR,
@@ -599,37 +627,52 @@ static TPM_RC TestEccSignAndVerify(TPM_ALG_ID scheme, ALGORITHM_VECTOR* toTest)
             SELF_TEST_FAILURE;
             break;
     }
+    debug_breakpoint(0x68);
     TEST_DEFAULT_TEST_HASH(toTest);
+    debug_breakpoint(0x69);
 
     // Have to copy the key. This is because the size used in the test vectors
     // is the size of the ECC parameter for the test key while the size of a point
     // is TPM dependent
+    debug_breakpoint(0x6A);
     MemoryCopy2B(&testObject.sensitive.sensitive.ecc.b,
                  &c_ecTestKey_ds.b,
                  sizeof(testObject.sensitive.sensitive.ecc.t.buffer));
+    debug_breakpoint(0x6B);
     LoadEccPoint(
         &testObject.publicArea.unique.ecc, &c_ecTestKey_QsX, &c_ecTestKey_QsY);
+    debug_breakpoint(0x6C);
     testObject.publicArea.parameters.eccDetail.curveID = c_testCurve;
 
-    if(TPM_RC_SUCCESS
-       != CryptEccValidateSignature(
-           &testSig, &testObject, (TPM2B_DIGEST*)&c_ecTestValue.b))
+    TPM_RC bb                                          = CryptEccValidateSignature(
+        &testSig, &testObject, (TPM2B_DIGEST*)&c_ecTestValue.b);
+
+    debug_breakpoint(0x6D);
+    if(TPM_RC_SUCCESS != bb)
     {
+        debug_breakpoint(0x6E);
         SELF_TEST_FAILURE;
     }
     CHECK_CANCELED;
 
+    TPM_RC cc = CryptEccSign(
+        &testSig, &testObject, (TPM2B_DIGEST*)&c_ecTestValue, &eccScheme, NULL);
+    debug_breakpoint(0x6F);
+
     // Now sign and verify some data
-    if(TPM_RC_SUCCESS
-       != CryptEccSign(
-           &testSig, &testObject, (TPM2B_DIGEST*)&c_ecTestValue, &eccScheme, NULL))
+    if(TPM_RC_SUCCESS != cc)
         SELF_TEST_FAILURE;
 
     CHECK_CANCELED;
 
-    if(TPM_RC_SUCCESS
-       != CryptEccValidateSignature(
-           &testSig, &testObject, (TPM2B_DIGEST*)&c_ecTestValue))
+    debug_breakpoint(0x60);
+
+    TPM_RC dd = CryptEccValidateSignature(
+        &testSig, &testObject, (TPM2B_DIGEST*)&c_ecTestValue);
+
+    debug_breakpoint(0x61);
+
+    if(TPM_RC_SUCCESS != dd)
         SELF_TEST_FAILURE;
 
     CHECK_CANCELED;
@@ -665,11 +708,18 @@ static TPM_RC TestKDFa(ALGORITHM_VECTOR* toTest)
 static TPM_RC TestEcc(TPM_ALG_ID alg, ALGORITHM_VECTOR* toTest)
 {
     TPM_RC result = TPM_RC_SUCCESS;
+    debug_breakpoint(0x49);
+    debug_breakpoint((BYTE)(alg & 0xFF));  // low
+    debug_breakpoint((BYTE)(alg >> 8));    // high
+
     NOT_REFERENCED(toTest);
+    debug_breakpoint(0x4A);
     switch(alg)
     {
         case TPM_ALG_ECC:
+            debug_breakpoint(0x4B);
         case TPM_ALG_ECDH:
+            debug_breakpoint(0x4C);
             // If this is in a loop then see if another test is going to deal with
             // this.
             // If toTest is not a self-test list
@@ -679,10 +729,13 @@ static TPM_RC TestEcc(TPM_ALG_ID alg, ALGORITHM_VECTOR* toTest)
                     || TEST_BIT(ALG_ECSCHNORR, *toTest)
                     || TEST_BIT(TPM_ALG_SM2, *toTest)))
             {
+                debug_breakpoint(0x4D);
                 result = TestECDH(alg, toTest);
+                debug_breakpoint(0x4E);
             }
             break;
         case TPM_ALG_ECDSA:
+            debug_breakpoint(0x4F);
         case TPM_ALG_ECSCHNORR:
         case TPM_ALG_SM2:
             result = TestEccSignAndVerify(alg, toTest);
@@ -691,6 +744,7 @@ static TPM_RC TestEcc(TPM_ALG_ID alg, ALGORITHM_VECTOR* toTest)
             SELF_TEST_FAILURE;
             break;
     }
+    debug_breakpoint(0x62);
     return result;
 }
 
@@ -851,27 +905,42 @@ TestAlgorithm(TPM_ALG_ID alg, ALGORITHM_VECTOR* toTest)
                 //        case TPM_ALG_KDF2:
                 //        case TPM_ALG_MGF1:
             case TPM_ALG_ECC:
+                debug_breakpoint(0xEC);
                 CLEAR_BOTH(alg);
                 if(doTest)
+                {
+                    debug_breakpoint(0xED);
                     result = TestEcc(TPM_ALG_ECDH, toTest);
+                    debug_breakpoint(0xEF);
+                }
                 else
                     SET_BOTH(TPM_ALG_ECDH);
                 break;
             case TPM_ALG_ECDSA:
+                debug_breakpoint(0x41);
             case TPM_ALG_ECDH:
+                debug_breakpoint(0x42);
             case TPM_ALG_ECSCHNORR:
+                debug_breakpoint(0x43);
                 //            case TPM_ALG_SM2:
                 if(doTest)
+                {
+                    debug_breakpoint(0x44);
                     result = TestEcc(alg, toTest);
+                    debug_breakpoint(0x45);
+                }
                 break;
 #  endif  // ALG_ECC
             default:
+                debug_breakpoint(0x46);
                 CLEAR_BIT(alg, *toTest);
+                debug_breakpoint(0x47);
                 break;
         }
         if(result != TPM_RC_SUCCESS)
             break;
     }
+    debug_breakpoint(0x48);
     return result;
 }
 

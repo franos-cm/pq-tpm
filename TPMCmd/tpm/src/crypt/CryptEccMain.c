@@ -388,13 +388,16 @@ TpmEcc_PointMult(Crypt_Point*          R,  // OUT: computed point
 {
     BOOL OK;
     //
+    debug_breakpoint(0xc0);
     TPM_DO_SELF_TEST(TPM_ALG_ECDH);
+    debug_breakpoint(0xc1);
 
     // Need one scalar
     OK = (d != NULL || u != NULL);
 
     // If S is present, then d has to be present. If S is not
     // present, then d may or may not be present
+
     OK = OK && (((S == NULL) == (d == NULL)) || (d != NULL));
 
     // either both u and Q have to be provided or neither can be provided (don't
@@ -402,27 +405,49 @@ TpmEcc_PointMult(Crypt_Point*          R,  // OUT: computed point
     OK = OK && ((u == NULL) == (Q == NULL));
 
     OK = OK && (E != NULL);
+    debug_breakpoint(0xc2);
     if(!OK)
         return TPM_RC_VALUE;
 
-    OK = (S == NULL) || ExtEcc_IsPointOnCurve(S, E);
-    OK = OK && ((Q == NULL) || ExtEcc_IsPointOnCurve(Q, E));
+    debug_breakpoint(0xc3);
+    BOOL var1 = ExtEcc_IsPointOnCurve(S, E);
+    debug_breakpoint(0xc4);
+    OK        = (S == NULL) || var1;
+    BOOL var2 = ExtEcc_IsPointOnCurve(Q, E);
+    debug_breakpoint(0xc5);
+    OK = OK && ((Q == NULL) || var2);
     if(!OK)
         return TPM_RC_ECC_POINT;
 
+    debug_breakpoint(0xc6);
     if((d != NULL) && (S == NULL))
+    {
+        debug_breakpoint(0xc7);
         S = ExtEcc_CurveGetG(ExtEcc_CurveGetCurveId(E));
+        debug_breakpoint(0xc8);
+    }
     // If only one scalar, don't need Shamir's trick
     if((d == NULL) || (u == NULL))
     {
+        debug_breakpoint(0xc9);
         if(d == NULL)
+        {
+            debug_breakpoint(0xcA);
             OK = ExtEcc_PointMultiply(R, Q, u, E);
+            debug_breakpoint(0xcb);
+        }
         else
+        {
+            debug_breakpoint(0xcc);
             OK = ExtEcc_PointMultiply(R, S, d, E);
+            debug_breakpoint(0xcd);
+        }
     }
     else
     {
+        debug_breakpoint(0xce);
         OK = ExtEcc_PointMultiplyAndAdd(R, S, d, Q, u, E);
+        debug_breakpoint(0xcf);
     }
     return (OK ? TPM_RC_SUCCESS : TPM_RC_NO_RESULT);
 }
@@ -468,10 +493,13 @@ BOOL TpmEcc_GenerateKeyPair(Crypt_Int*            bnD,  // OUT: private scalar
 {
     BOOL OK = FALSE;
     // Get a private scalar
+    debug_breakpoint(0xE9);
     OK = TpmEcc_GenPrivateScalar(bnD, E, rand);
 
     // Do a point multiply
+    debug_breakpoint(0xEA);
     OK = OK && ExtEcc_PointMultiply(ecQ, NULL, bnD, E);
+    debug_breakpoint(0xEB);
     return OK;
 }
 
@@ -611,52 +639,77 @@ LIB_EXPORT TPM_RC CryptEccGenerateKey(
                                 //     RNG state
 )
 {
+    debug_breakpoint(0xD0);
     CRYPT_CURVE_INITIALIZED(E, publicArea->parameters.eccDetail.curveID);
+    debug_breakpoint(0xD1);
     CRYPT_ECC_NUM(bnD);
+    debug_breakpoint(0xD3);
     CRYPT_POINT_VAR(ecQ);
+    debug_breakpoint(0xD4);
     BOOL   OK;
     TPM_RC retVal;
-    //
+    debug_breakpoint(0xD5);
     TPM_DO_SELF_TEST(TPM_ALG_ECDSA);  // ECDSA is used to verify each key
+    debug_breakpoint(0xD6);
 
     // Validate parameters
     if(E == NULL)
+    {
+        debug_breakpoint(0xD7);
         ERROR_EXIT(TPM_RC_CURVE);
+    }
 
+    debug_breakpoint(0xD8);
     publicArea->unique.ecc.x.t.size = 0;
     publicArea->unique.ecc.y.t.size = 0;
     sensitive->sensitive.ecc.t.size = 0;
 
-    OK                              = TpmEcc_GenerateKeyPair(bnD, ecQ, E, rand);
+    debug_breakpoint(0xD9);
+    OK = TpmEcc_GenerateKeyPair(bnD, ecQ, E, rand);
+    debug_breakpoint(0xDA);
     if(OK)
     {
+        debug_breakpoint(0xDB);
         TpmEcc_PointTo2B(&publicArea->unique.ecc, ecQ, E);
+        debug_breakpoint(0xDC);
         TpmMath_IntTo2B(
             bnD, &sensitive->sensitive.ecc.b, publicArea->unique.ecc.x.t.size);
+        debug_breakpoint(0xDD);
     }
 #  if FIPS_COMPLIANT
     // See if PWCT is required
     if(OK && IS_ATTRIBUTE(publicArea->objectAttributes, TPMA_OBJECT, sign))
     {
+        debug_breakpoint(0xDE);
         CRYPT_ECC_NUM(bnT);
+        debug_breakpoint(0xDF);
         CRYPT_ECC_NUM(bnS);
+        debug_breakpoint(0xE0);
         TPM2B_DIGEST digest;
         //
         TPM_DO_SELF_TEST(TPM_ALG_ECDSA);
+        debug_breakpoint(0xE1);
         digest.t.size = MIN(sensitive->sensitive.ecc.t.size, sizeof(digest.t.buffer));
+        debug_breakpoint(0xE2);
         // Get a random value to sign using the built in DRBG state
         DRBG_Generate(NULL, digest.t.buffer, digest.t.size);
+        debug_breakpoint(0xE3);
         if(g_inFailureMode)
             return TPM_RC_FAILURE;
+        debug_breakpoint(0xE4);
         TpmEcc_SignEcdsa(bnT, bnS, E, bnD, &digest, NULL);
+        debug_breakpoint(0xE5);
         // and make sure that we can validate the signature
+        debug_breakpoint(0xE6);
         OK = TpmEcc_ValidateSignatureEcdsa(bnT, bnS, E, ecQ, &digest)
              == TPM_RC_SUCCESS;
     }
 #  endif
     retVal = (OK) ? TPM_RC_SUCCESS : TPM_RC_NO_RESULT;
 Exit:
+    debug_breakpoint(0xE7);
     CRYPT_CURVE_FREE(E);
+    debug_breakpoint(0xE8);
     return retVal;
 }
 

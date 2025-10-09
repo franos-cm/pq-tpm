@@ -107,43 +107,42 @@ static void DfStart(PDF_STATE dfState, uint32_t inputLength)
 {
     BYTE       init[8];
     int        i;
-    UINT32     drbgSeedSize = sizeof(DRBG_SEED);
+    UINT32     drbgSeedSize               = sizeof(DRBG_SEED);
 
-    const BYTE dfKey[DRBG_KEY_SIZE_BYTES] =
-    { 0x00,
-      0x01,
-      0x02,
-      0x03,
-      0x04,
-      0x05,
-      0x06,
-      0x07,
-      0x08,
-      0x09,
-      0x0a,
-      0x0b,
-      0x0c,
-      0x0d,
-      0x0e,
-      0x0f
+    const BYTE dfKey[DRBG_KEY_SIZE_BYTES] = {0x00,
+                                             0x01,
+                                             0x02,
+                                             0x03,
+                                             0x04,
+                                             0x05,
+                                             0x06,
+                                             0x07,
+                                             0x08,
+                                             0x09,
+                                             0x0a,
+                                             0x0b,
+                                             0x0c,
+                                             0x0d,
+                                             0x0e,
+                                             0x0f
 #if DRBG_KEY_SIZE_BYTES > 16
-      ,
-      0x10,
-      0x11,
-      0x12,
-      0x13,
-      0x14,
-      0x15,
-      0x16,
-      0x17,
-      0x18,
-      0x19,
-      0x1a,
-      0x1b,
-      0x1c,
-      0x1d,
-      0x1e,
-      0x1f
+                                             ,
+                                             0x10,
+                                             0x11,
+                                             0x12,
+                                             0x13,
+                                             0x14,
+                                             0x15,
+                                             0x16,
+                                             0x17,
+                                             0x18,
+                                             0x19,
+                                             0x1a,
+                                             0x1b,
+                                             0x1c,
+                                             0x1d,
+                                             0x1e,
+                                             0x1f
 #endif
     };
     memset(dfState, 0, sizeof(DF_STATE));
@@ -628,18 +627,26 @@ LIB_EXPORT TPM_RC DRBG_InstantiateSeeded(
     const TPM2B* additional  // IN: additional data
 )
 {
+    debug_breakpoint(0x30);
     DF_STATE dfState;
     int      totalInputSize;
     // DRBG should have been tested, but...
-    if(!IsDrbgTested() && !DRBG_SelfTest())
+    BOOL var1 = !IsDrbgTested();
+    debug_breakpoint(0x31);
+    BOOL var2 = !DRBG_SelfTest();
+    debug_breakpoint(0x32);
+    if(var1 && var2)
     {
+        debug_breakpoint(0x33);
         FAIL_RC(FATAL_ERROR_SELF_TEST);
     }
     // Initialize the DRBG state
+    debug_breakpoint(0x34);
     memset(drbgState, 0, sizeof(DRBG_STATE));
     drbgState->magic = DRBG_MAGIC;
 
     // Size all of the values
+    debug_breakpoint(0x35);
     totalInputSize = (seed != NULL) ? seed->size : 0;
     totalInputSize += (purpose != NULL) ? purpose->size : 0;
     totalInputSize += (name != NULL) ? name->size : 0;
@@ -647,20 +654,38 @@ LIB_EXPORT TPM_RC DRBG_InstantiateSeeded(
 
     // Initialize the derivation
     DfStart(&dfState, totalInputSize);
+    debug_breakpoint(0x36);
 
     // Run all the input strings through the derivation function
     if(seed != NULL)
+    {
+        debug_breakpoint(0x37);
         DfUpdate(&dfState, seed->size, seed->buffer);
+        debug_breakpoint(0x3D);
+    }
     if(purpose != NULL)
+    {
+        debug_breakpoint(0x38);
         DfUpdate(&dfState, purpose->size, purpose->buffer);
+        debug_breakpoint(0x3E);
+    }
     if(name != NULL)
+    {
+        debug_breakpoint(0x39);
         DfUpdate(&dfState, name->size, name->buffer);
+        debug_breakpoint(0x3F);
+    }
     if(additional != NULL)
+    {
+        debug_breakpoint(0x3A);
         DfUpdate(&dfState, additional->size, additional->buffer);
+    }
 
     // Used the derivation function output as the "entropy" input. This is not
     // how it is described in SP800-90A but this is the equivalent function
+    debug_breakpoint(0x3B);
     DRBG_Reseed(((DRBG_STATE*)drbgState), DfEnd(&dfState), NULL);
+    debug_breakpoint(0x3C);
 
     return TPM_RC_SUCCESS;
 }

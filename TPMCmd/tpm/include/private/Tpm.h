@@ -13,5 +13,6 @@
 #include "GpMacros.h"          // Define additional macros
 #include "Global.h"            // Define other TPM types
 #include "InternalRoutines.h"  // Function prototypes
+#include "log.h"               // Useful for debugging
 
 #endif  // _TPM_H_

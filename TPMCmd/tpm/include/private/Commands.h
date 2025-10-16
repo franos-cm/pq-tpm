@@ -382,5 +382,12 @@
 #if CC_Vendor_TCG_Test
 #  include "Vendor_TCG_Test_fp.h"
 #endif
+// Enable this once we have these commands ready
+// #if CC_HashSign
+// #  include "HashSign_fp.h"
+// #endif
+// #if CC_HashVerify
+// #  include "HashVerify_fp.h"
+// #endif
 
 #endif  // _COMMANDS_H_

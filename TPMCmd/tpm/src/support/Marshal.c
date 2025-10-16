@@ -1724,6 +1724,9 @@ TPMI_ALG_SIG_SCHEME_Unmarshal(
 #  if ALG_XMSS
             case TPM_ALG_XMSS:
 #  endif  // ALG_XMSS
+#if ALG_DILITHIUM
+    case TPM_ALG_DILITHIUM:
+#endif   // ALG_DILITHIUM
                 break;
             default:
                 if((*target != TPM_ALG_NULL) || !flag)
@@ -5012,6 +5015,30 @@ TPM2B_PUBLIC_KEY_RSA_Marshal(TPM2B_PUBLIC_KEY_RSA* source, BYTE** buffer, INT32*
     return result;
 }
 
+#if ALG_DILITHIUM
+// Custom Dilithium Public Key Commands
+TPM_RC
+TPM2B_PUBLIC_KEY_DILITHIUM_Unmarshal(TPM2B_PUBLIC_KEY_DILITHIUM* target, BYTE** buffer, INT32* size)
+{
+    TPM_RC result;
+    result = UINT16_Unmarshal((UINT16*)&target->t.size, buffer, size);
+    if((result == TPM_RC_SUCCESS) && (target->t.size > DILITHIUM_MAX_PUBLIC_KEY))
+        result = TPM_RC_SIZE;
+    if(result == TPM_RC_SUCCESS)
+        result = BYTE_Array_Unmarshal(target->t.buffer, buffer, size, (INT32)target->t.size);
+    return result;
+}
+UINT16
+TPM2B_PUBLIC_KEY_DILITHIUM_Marshal(TPM2B_PUBLIC_KEY_DILITHIUM* source, BYTE** buffer, INT32* size)
+{
+    UINT16 result = 0;
+    result = (UINT16)(result + UINT16_Marshal((UINT16*)&source->t.size, buffer, size));
+    if(source->t.size == 0) return result;
+    result = (UINT16)(result + BYTE_Array_Marshal(source->t.buffer, buffer, size, (INT32)source->t.size));
+    return result;
+}
+#endif  //Dilithium
+
 // Table "Definition of TPMI_RSA_KEY_BITS Type" (Part 2: Structures)
 TPM_RC
 TPMI_RSA_KEY_BITS_Unmarshal(TPMI_RSA_KEY_BITS* target, BYTE** buffer, INT32* size)
@@ -5084,6 +5111,30 @@ TPM2B_PRIVATE_KEY_RSA_Marshal(
                                            (INT32)source->t.size));
     return result;
 }
+
+#if ALG_DILITHIUM
+// Custom Dilithium Public Key Commands
+TPM_RC
+TPM2B_PRIVATE_KEY_DILITHIUM_Unmarshal(TPM2B_PRIVATE_KEY_DILITHIUM* target, BYTE** buffer, INT32* size)
+{
+    TPM_RC result;
+    result = UINT16_Unmarshal((UINT16*)&target->t.size, buffer, size);
+    if((result == TPM_RC_SUCCESS) && (target->t.size > DILITHIUM_MAX_PRIVATE_KEY))
+        result = TPM_RC_SIZE;
+    if(result == TPM_RC_SUCCESS)
+        result = BYTE_Array_Unmarshal(target->t.buffer, buffer, size, (INT32)target->t.size);
+    return result;
+}
+UINT16
+TPM2B_PRIVATE_KEY_DILITHIUM_Marshal(TPM2B_PRIVATE_KEY_DILITHIUM* source, BYTE** buffer, INT32* size)
+{
+    UINT16 result = 0;
+    result = (UINT16)(result + UINT16_Marshal((UINT16*)&source->t.size, buffer, size));
+    if(source->t.size == 0) return result;
+    result = (UINT16)(result + BYTE_Array_Marshal(source->t.buffer, buffer, size, (INT32)source->t.size));
+    return result;
+}
+#endif  //Dilithium
 
 // Table "Definition of TPM2B_ECC_PARAMETER Structure" (Part 2: Structures)
 #  if ALG_ECC
@@ -5405,6 +5456,29 @@ TPMS_SIGNATURE_RSA_Marshal(TPMS_SIGNATURE_RSA* source, BYTE** buffer, INT32* siz
     return result;
 }
 
+#if ALG_DILITHIUM
+TPM_RC
+TPM2B_SIGNATURE_DILITHIUM_Unmarshal(TPM2B_SIGNATURE_DILITHIUM* target, BYTE** buffer, INT32* size)
+{
+    TPM_RC result;
+    result = UINT16_Unmarshal((UINT16*)&target->t.size, buffer, size);
+    if((result == TPM_RC_SUCCESS) && (target->t.size > DILITHIUM_MAX_SIGNATURE))
+        result = TPM_RC_SIZE;
+    if(result == TPM_RC_SUCCESS)
+        result = BYTE_Array_Unmarshal((BYTE*)target->t.buffer, buffer, size, (INT32)target->t.size);
+    return result;
+}
+UINT16
+TPM2B_SIGNATURE_DILITHIUM_Marshal(TPM2B_SIGNATURE_DILITHIUM* source, BYTE** buffer, INT32* size)
+{
+    UINT16 result = 0;
+    result = (UINT16)(result + UINT16_Marshal((UINT16*)&source->t.size, buffer, size));
+    if(source->t.size == 0) return result;
+    result = (UINT16)(result + BYTE_Array_Marshal((BYTE*)source->t.buffer, buffer, size, (INT32)source->t.size));
+    return result;
+}
+#endif  //Dilithium
+
 // Table "Definition of Types for Signature" (Part 2: Structures)
 #  if !USE_MARSHALING_DEFINES
 TPM_RC
@@ -5465,6 +5539,26 @@ TPMS_SIGNATURE_ECC_Marshal(TPMS_SIGNATURE_ECC* source, BYTE** buffer, INT32* siz
     return result;
 }
 #  endif  // ALG_ECC
+
+#if ALG_DILITHIUM
+TPM_RC
+TPMS_SIGNATURE_DILITHIUM_Unmarshal(TPMS_SIGNATURE_DILITHIUM* target, BYTE** buffer, INT32* size)
+{
+    TPM_RC result;
+    result = TPMI_ALG_HASH_Unmarshal((TPMI_ALG_HASH*)&target->hash, buffer, size, 0);
+    if(result == TPM_RC_SUCCESS)
+        result = TPM2B_SIGNATURE_DILITHIUM_Unmarshal((TPM2B_SIGNATURE_DILITHIUM*)&target->sig, buffer, size);
+    return result;
+}
+UINT16
+TPMS_SIGNATURE_DILITHIUM_Marshal(TPMS_SIGNATURE_DILITHIUM* source, BYTE** buffer, INT32* size)
+{
+    UINT16 result = 0;
+    result = (UINT16)(result + TPMI_ALG_HASH_Marshal((TPMI_ALG_HASH*)&source->hash, buffer, size));
+    result = (UINT16)(result + TPM2B_SIGNATURE_DILITHIUM_Marshal((TPM2B_SIGNATURE_DILITHIUM*)&source->sig, buffer, size));
+    return result;
+}
+#endif  //Dilithium
 
 // Table "Definition of Types for TPMS_SIGNATURE_ECC" (Part 2: Structures)
 #  if !USE_MARSHALING_DEFINES
@@ -5598,6 +5692,11 @@ TPMU_SIGNATURE_Unmarshal(
             return TPMS_SIGNATURE_XMSS_Unmarshal(
                 (TPMS_SIGNATURE_XMSS*)&(target->xmss), buffer, size);
 #  endif  // ALG_XMSS
+#if ALG_DILITHIUM
+    case TPM_ALG_DILITHIUM:
+        return TPMS_SIGNATURE_DILITHIUM_Unmarshal(
+            (TPMS_SIGNATURE_DILITHIUM*)&(target->dilithium), buffer, size);
+#  endif  // ALG_DILITHIUM
         case TPM_ALG_NULL:
             return TPM_RC_SUCCESS;
     }
@@ -5663,6 +5762,11 @@ TPMU_SIGNATURE_Marshal(
             return TPMS_SIGNATURE_XMSS_Marshal(
                 (TPMS_SIGNATURE_XMSS*)&(source->xmss), buffer, size);
 #  endif  // ALG_XMSS
+#if ALG_DILITHIUM
+    case TPM_ALG_DILITHIUM:
+        return TPMS_SIGNATURE_DILITHIUM_Marshal(
+            (TPMS_SIGNATURE_DILITHIUM*)&(source->dilithium), buffer, size);
+#  endif // ALG_DILITHIUM
     }
     return 0;
 }
@@ -5819,6 +5923,9 @@ TPMI_ALG_PUBLIC_Unmarshal(TPMI_ALG_PUBLIC* target, BYTE** buffer, INT32* size)
 #  if ALG_SYMCIPHER
             case TPM_ALG_SYMCIPHER:
 #  endif  // ALG_SYMCIPHER
+#  if ALG_DILITHIUM
+            case TPM_ALG_DILITHIUM:
+#  endif  // ALG_DILITHIUM
                 break;
             default:
                 result = TPM_RC_TYPE;
@@ -5862,6 +5969,11 @@ TPMU_PUBLIC_ID_Unmarshal(
             return TPMS_ECC_POINT_Unmarshal(
                 (TPMS_ECC_POINT*)&(target->ecc), buffer, size);
 #  endif  // ALG_ECC
+#  if ALG_DILITHIUM
+    case TPM_ALG_DILITHIUM:
+        return TPM2B_PUBLIC_KEY_DILITHIUM_Unmarshal(
+            (TPM2B_PUBLIC_KEY_DILITHIUM*)&(target->dilithium), buffer, size);
+#  endif  // ALG_DILITHIUM
     }
     return TPM_RC_SELECTOR;
 }
@@ -5890,6 +6002,11 @@ TPMU_PUBLIC_ID_Marshal(
             return TPMS_ECC_POINT_Marshal(
                 (TPMS_ECC_POINT*)&(source->ecc), buffer, size);
 #  endif  // ALG_ECC
+#  if ALG_DILITHIUM
+    case TPM_ALG_DILITHIUM:
+        return TPM2B_PUBLIC_KEY_DILITHIUM_Marshal(
+            (TPM2B_PUBLIC_KEY_DILITHIUM*)&(source->dilithium), buffer, size);
+#  endif
     }
     return 0;
 }
@@ -5948,6 +6065,50 @@ TPMS_RSA_PARMS_Marshal(TPMS_RSA_PARMS* source, BYTE** buffer, INT32* size)
         (UINT16)(result + UINT32_Marshal((UINT32*)&(source->exponent), buffer, size));
     return result;
 }
+
+#if ALG_DILITHIUM
+TPM_RC
+TPMS_DILITHIUM_PARMS_Unmarshal(TPMS_DILITHIUM_PARMS* target, BYTE** buffer, INT32* size)
+{
+    TPM_RC result;
+
+    // symmetric
+    result = TPMT_SYM_DEF_OBJECT_Unmarshal(&target->symmetric, buffer, size, TRUE);
+    if(result != TPM_RC_SUCCESS) return result;
+
+    // scheme.scheme as TPM_ALG_ID; must be TPM_ALG_NULL; no details follow
+    TPM_ALG_ID schemeAlg = TPM_ALG_ERROR;
+    result = TPM_ALG_ID_Unmarshal(&schemeAlg, buffer, size);
+    if(result != TPM_RC_SUCCESS) return result;
+    if(schemeAlg != TPM_ALG_NULL)
+        return TPM_RCS_SCHEME;
+    target->scheme.scheme = schemeAlg;
+    // target->scheme.details is not present for NULL; no unmarshalling
+
+    // remaining fields
+    result = UINT16_Unmarshal(&target->securityLevel, buffer, size);
+    if(result != TPM_RC_SUCCESS) return result;
+    return TPMI_ALG_HASH_Unmarshal(&target->nameHashAlg, buffer, size, FALSE);
+}
+
+UINT16
+TPMS_DILITHIUM_PARMS_Marshal(TPMS_DILITHIUM_PARMS* source, BYTE** buffer, INT32* size)
+{
+    UINT16 result = 0;
+
+    // symmetric
+    result += TPMT_SYM_DEF_OBJECT_Marshal(&source->symmetric, buffer, size);
+
+    // scheme on the wire is always TPM_ALG_NULL (no details for NULL)
+    TPM_ALG_ID schemeAlg = TPM_ALG_NULL;
+    result += TPM_ALG_ID_Marshal(&schemeAlg, buffer, size);
+
+    // remaining fields
+    result += UINT16_Marshal(&source->securityLevel, buffer, size);
+    result += TPMI_ALG_HASH_Marshal(&source->nameHashAlg, buffer, size);
+    return result;
+}
+#endif  //Dilithium
 
 // Table "Definition of TPMS_ECC_PARMS Structure" (Part 2: Structures)
 TPM_RC
@@ -6013,6 +6174,11 @@ TPMU_PUBLIC_PARMS_Unmarshal(
             return TPMS_ECC_PARMS_Unmarshal(
                 (TPMS_ECC_PARMS*)&(target->eccDetail), buffer, size);
 #  endif  // ALG_ECC
+#  if ALG_DILITHIUM
+    case TPM_ALG_DILITHIUM:
+        return TPMS_DILITHIUM_PARMS_Unmarshal(
+            (TPMS_DILITHIUM_PARMS*)&(target->dilithiumDetail), buffer, size);
+#  endif
     }
     return TPM_RC_SELECTOR;
 }
@@ -6042,6 +6208,11 @@ TPMU_PUBLIC_PARMS_Marshal(
             return TPMS_ECC_PARMS_Marshal(
                 (TPMS_ECC_PARMS*)&(source->eccDetail), buffer, size);
 #  endif  // ALG_ECC
+#  if ALG_DILITHIUM
+        case TPM_ALG_DILITHIUM:
+            return TPMS_DILITHIUM_PARMS_Marshal(
+                (TPMS_DILITHIUM_PARMS*)&(source->dilithiumDetail), buffer, size);
+#  endif
     }
     return 0;
 }
@@ -6262,6 +6433,11 @@ TPMU_SENSITIVE_COMPOSITE_Unmarshal(
             return TPM2B_SYM_KEY_Unmarshal(
                 (TPM2B_SYM_KEY*)&(target->sym), buffer, size);
 #  endif  // ALG_SYMCIPHER
+#  if ALG_DILITHIUM
+        case TPM_ALG_DILITHIUM:
+            return TPM2B_PRIVATE_KEY_DILITHIUM_Unmarshal(
+                (TPM2B_PRIVATE_KEY_DILITHIUM*)&(target->dilithium), buffer, size);
+#  endif
     }
     return TPM_RC_SELECTOR;
 }
@@ -6291,6 +6467,11 @@ TPMU_SENSITIVE_COMPOSITE_Marshal(
             return TPM2B_SYM_KEY_Marshal(
                 (TPM2B_SYM_KEY*)&(source->sym), buffer, size);
 #  endif  // ALG_SYMCIPHER
+#  if ALG_DILITHIUM
+        case TPM_ALG_DILITHIUM:
+            return TPM2B_PRIVATE_KEY_DILITHIUM_Marshal(
+                (TPM2B_PRIVATE_KEY_DILITHIUM*)&(source->dilithium), buffer, size);
+#  endif  // ALG_DILITHIUM
     }
     return 0;
 }

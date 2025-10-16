@@ -8,6 +8,10 @@
 
 #ifndef _TPM_PROFILE_COMMON_H_
 #define _TPM_PROFILE_COMMON_H_
+
+// Import to get memory map from SoC
+#include <generated/mem.h>
+
 // YES & NO defined by TpmBuildSwitches.h
 #if (YES != 1 || NO != 0)
 #  error YES or NO incorrectly set
@@ -150,6 +154,11 @@
 #define ALG_KDF1_SP800_108                  ALG_YES
 
 //***********************************************
+// Defines for PQC
+//***********************************************
+#define ALG_DILITHIUM                       ALG_YES
+
+//***********************************************
 // Defines for Obscuration/MISC/compatibility
 //***********************************************
 #define ALG_XOR                             ALG_YES
@@ -195,8 +204,9 @@
 // When using PC CRB, the page size for both commands and
 // control registers is 4k.  The command buffer starts at
 // offset 0x80, so the net size available is:
-#define  MAX_COMMAND_SIZE               (4096-0x80)
-#define  MAX_RESPONSE_SIZE              (4096-0x80)
+// NOTE: value changed to be defined by the SoC memory map
+#define  MAX_COMMAND_SIZE               (TPM_CMD_BUFFER_SIZE-0x80)
+#define  MAX_RESPONSE_SIZE              (TPM_CMD_BUFFER_SIZE-0x80)
 
 //***********************************************
 // Vendor Info

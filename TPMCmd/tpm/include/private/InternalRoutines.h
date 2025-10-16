@@ -83,6 +83,10 @@
 #  include "CryptEccCrypt_fp.h"
 #endif
 
+#if ALG_DILITHIUM
+#  include "CryptDilithium_fp.h"
+#endif
+
 #if CC_MAC || CC_MAC_Start
 #  include "CryptSmac_fp.h"
 #  if ALG_CMAC

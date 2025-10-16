@@ -218,6 +218,30 @@ LIB_EXPORT int _plat__NvCommit(void);
 // zeroize anything in the Platform.  This should zeroize NV as well.
 LIB_EXPORT void _plat__TearDown();
 
+#if ALG_DILITHIUM
+// Keygen: returns blobs for the requested security level.
+LIB_EXPORT int _plat__Dilithium_KeyGen(uint16_t  level,
+                                       uint16_t* pk_size,
+                                       uint8_t*  pk_ptr,
+                                       uint16_t* sk_size,
+                                       uint8_t*  sk_ptr);
+
+LIB_EXPORT int _plat__Dilithium_Sign(uint16_t       prv_size,
+                                     const uint8_t* prv_key,
+                                     uint16_t       digest_size,
+                                     const uint8_t* digest,
+                                     uint16_t*      sig_size,
+                                     uint8_t*       sig);
+
+LIB_EXPORT int _plat__Dilithium_Verify(uint16_t       pub_size,
+                                       const uint8_t* pub_key,
+                                       uint16_t       digest_size,
+                                       const uint8_t* digest,
+                                       uint16_t       sig_size,
+                                       const uint8_t* sig,
+                                       int*           verified);
+#endif
+
 //** From PlatformACT.c
 
 #if ACT_SUPPORT

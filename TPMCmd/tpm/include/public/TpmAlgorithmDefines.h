@@ -150,6 +150,18 @@
 #  define MAX_RSA_KEY_BYTES BITS_TO_BYTES(RSA_MAX_KEY_SIZE_BITS)
 #endif  // ALG_RSA
 
+#ifdef ALG_DILITHIUM
+#  ifndef DILITHIUM_MAX_PUBLIC_KEY
+#    define DILITHIUM_MAX_PUBLIC_KEY 2592
+#  endif
+#  ifndef DILITHIUM_MAX_PRIVATE_KEY
+#    define DILITHIUM_MAX_PRIVATE_KEY 4864
+#  endif
+#  ifndef DILITHIUM_MAX_SIGNATURE
+#    define DILITHIUM_MAX_SIGNATURE 4595
+#  endif
+#endif  // ALG_DILITHIUM
+
 // Table "Defines for AES Symmetric Cipher Algorithm Constants" (TCG Algorithm Registry)
 #define AES_KEY_SIZES_BITS (AES_128 * 128), (AES_192 * 192), (AES_256 * 256)
 #define AES_MAX_KEY_SIZE_BITS \

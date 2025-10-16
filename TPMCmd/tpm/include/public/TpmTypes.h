@@ -145,10 +145,12 @@ typedef UINT16 TPM_ALG_ID;
 #define TPM_ALG_LMS              (TPM_ALG_ID)(ALG_LMS_VALUE)
 #define ALG_XMSS_VALUE           0x0071
 #define TPM_ALG_XMSS             (TPM_ALG_ID)(ALG_XMSS_VALUE)
+#define ALG_DILITHIUM_VALUE      0x0072
+#define TPM_ALG_DILITHIUM        (TPM_ALG_ID)(ALG_DILITHIUM_VALUE)
 //        Values derived from Table "Definition of TPM_ALG_ID Constants" (Part 2: Structures)
 #define ALG_FIRST_VALUE 0x0001
 #define TPM_ALG_FIRST   (TPM_ALG_ID)(ALG_FIRST_VALUE)
-#define ALG_LAST_VALUE  0x0071
+#define ALG_LAST_VALUE  0x0072
 #define TPM_ALG_LAST    (TPM_ALG_ID)(ALG_LAST_VALUE)
 
 // Table "Definition of TPM_ECC_CURVE Constants" (Part 2: Structures)
@@ -301,7 +303,9 @@ typedef UINT32 TPM_CC;
 #define TPM_CC_NV_DefineSpace2            (TPM_CC)(0x0000019D)
 #define TPM_CC_NV_ReadPublic2             (TPM_CC)(0x0000019E)
 #define TPM_CC_SetCapability              (TPM_CC)(0x0000019F)
-#define TPM_CC_LAST                       (TPM_CC)(0x0000019F)
+#define TPM_CC_HashSign                   (TPM_CC)(0x200001A0)
+#define TPM_CC_HashVerify                 (TPM_CC)(0x200001A1)
+#define TPM_CC_LAST                       (TPM_CC)(0x000001A1)
 #define CC_VEND                           (TPM_CC)(0x20000000)
 #define TPM_CC_Vendor_TCG_Test            (TPM_CC)(0x20000000)
 
@@ -948,13 +952,13 @@ typedef struct
 
 // Initializer for the bit-field structure
 #  define TPMA_ALGORITHM_INITIALIZER(asymmetric,                               \
-                                     symmetric,                                \
-                                     hash,                                     \
-                                     object,                                   \
-                                     bits_at_4,                                \
-                                     signing,                                  \
-                                     encrypting,                               \
-                                     method,                                   \
+       symmetric,                                \
+       hash,                                     \
+       object,                                   \
+       bits_at_4,                                \
+       signing,                                  \
+       encrypting,                               \
+       method,                                   \
                                      bits_at_11)                               \
       {                                                                        \
           asymmetric, symmetric, hash, object, bits_at_4, signing, encrypting, \
@@ -2249,6 +2253,9 @@ typedef union
 #if ALG_XMSS
     TPMS_SIG_SCHEME_XMSS xmss;
 #endif  // ALG_XMSS
+#if ALG_DILITHIUM
+    TPMS_SCHEME_HASH dilithium; // TODO: change this to a proper one
+#endif  // ALG_DILITHIUM
     TPMS_SCHEME_HASH any;
 } TPMU_SIG_SCHEME;
 
@@ -2451,6 +2458,46 @@ typedef TPMS_SIGNATURE_RSA TPMS_SIGNATURE_RSAPSS;
 typedef TPMS_SIGNATURE_RSA TPMS_SIGNATURE_RSASSA;
 #define TYPE_OF_TPMS_SIGNATURE_RSASSA TPMS_SIGNATURE_RSA
 
+// --------------- Custom PQC structs ------------------
+#ifdef ALG_DILITHIUM
+typedef union
+{
+    struct
+    {
+        UINT16 size;
+        BYTE   buffer[DILITHIUM_MAX_PUBLIC_KEY];
+    } t;
+    TPM2B b;
+} TPM2B_PUBLIC_KEY_DILITHIUM;
+
+// Also add the matching private key/signature TPM2B wrappers if you use them elsewhere.
+typedef union
+{
+    struct
+    {
+        UINT16 size;
+        BYTE   buffer[DILITHIUM_MAX_PRIVATE_KEY];
+    } t;
+    TPM2B b;
+} TPM2B_PRIVATE_KEY_DILITHIUM;
+
+typedef union
+{
+    struct
+    {
+        UINT16 size;
+        BYTE   buffer[DILITHIUM_MAX_SIGNATURE];
+    } t;
+    TPM2B b;
+} TPM2B_SIGNATURE_DILITHIUM;
+
+typedef struct
+{
+    TPMI_ALG_HASH             hash; // TPM_ALG_NULL if HW hashed internally. TODO: check this
+    TPM2B_SIGNATURE_DILITHIUM sig;
+} TPMS_SIGNATURE_DILITHIUM;
+#endif // ALG_DILITHIUM
+
 typedef struct
 {  // (Part 2: Structures)
     TPMI_ALG_HASH       hash;
@@ -2507,6 +2554,9 @@ typedef union
 #if ALG_XMSS
     TPMS_SIGNATURE_XMSS xmss;
 #endif  // ALG_XMSS
+#if ALG_DILITHIUM
+    TPMS_SIGNATURE_DILITHIUM dilithium;
+#endif  // ALG_DILITHIUM
     TPMS_SCHEME_HASH any;
 } TPMU_SIGNATURE;
 
@@ -2557,6 +2607,9 @@ typedef union
 #if ALG_ECC
     TPMS_ECC_POINT ecc;
 #endif  // ALG_ECC
+#if ALG_DILITHIUM
+    TPM2B_PUBLIC_KEY_DILITHIUM dilithium;
+#endif  // ALG_DILITHIUM
     TPMS_DERIVE derive;
 } TPMU_PUBLIC_ID;
 
@@ -2587,6 +2640,14 @@ typedef struct
     TPMT_KDF_SCHEME     kdf;
 } TPMS_ECC_PARMS;
 
+typedef struct
+{
+    TPMT_SYM_DEF_OBJECT symmetric;   // must be TPM_ALG_NULL for non-parent signing keys
+    TPMT_ASYM_SCHEME    scheme;      // TPM_ALG_NULL (no scheme binding)
+    UINT16              securityLevel;
+    TPMI_ALG_HASH       nameHashAlg;  // optional name-domain hash, usually TPM_ALG_SHA256
+} TPMS_DILITHIUM_PARMS;
+
 typedef union
 {  // (Part 2: Structures)
 #if ALG_KEYEDHASH
@@ -2601,6 +2662,9 @@ typedef union
 #if ALG_ECC
     TPMS_ECC_PARMS eccDetail;
 #endif  // ALG_ECC
+#if ALG_DILITHIUM
+    TPMS_DILITHIUM_PARMS dilithiumDetail;
+#endif  // ALG_DILITHIUM
     TPMS_ASYM_PARMS asymDetail;
 } TPMU_PUBLIC_PARMS;
 
@@ -2660,6 +2724,9 @@ typedef union
 #if ALG_SYMCIPHER
     TPM2B_SYM_KEY sym;
 #endif  // ALG_SYMCIPHER
+#if ALG_DILITHIUM
+    TPM2B_PRIVATE_KEY_DILITHIUM dilithium;
+#endif
     TPM2B_PRIVATE_VENDOR_SPECIFIC any;
 } TPMU_SENSITIVE_COMPOSITE;
 

@@ -5156,6 +5156,76 @@ Vendor_TCG_Test_COMMAND_DESCRIPTOR_t _Vendor_TCG_TestData = {
 #endif // CC_Vendor_TCG_Test
 
 
+#if       CC_HashSignStart
+#include    "HashSignStart_fp.h"
+
+typedef TPM_RC (HashSignStart_Entry)(
+    HashSignStart_In*  in,
+    HashSignStart_Out* out
+);
+
+typedef const struct
+{
+    HashSignStart_Entry* entry;
+    UINT16               inSize;
+    UINT16               outSize;
+    UINT16               offsetOfTypes;
+    UINT16               paramOffsets[1];
+    BYTE                 types[5];
+} HashSignStart_COMMAND_DESCRIPTOR_t;
+
+static HashSignStart_COMMAND_DESCRIPTOR_t _HashSignStartData = {
+    /* entry         */         &TPM2_HashSignStart,
+    /* inSize        */         (UINT16)(sizeof(HashSignStart_In)),
+    /* outSize       */         (UINT16)(sizeof(HashSignStart_Out)),
+    /* offsetOfTypes */         offsetof(HashSignStart_COMMAND_DESCRIPTOR_t, types),
+    /* offsets       */         {(UINT16)(offsetof(HashSignStart_In, totalLen))},
+    /* types         */         {TPMI_DH_OBJECT_H_UNMARSHAL,  // keyHandle
+                                 UINT32_P_UNMARSHAL,          // totalLen
+                                 END_OF_LIST,
+                                 TPMI_DH_OBJECT_H_MARSHAL,    // response handle: sequenceHandle
+                                 END_OF_LIST}
+};
+#  define _HashSignStartDataAddress (&_HashSignStartData)
+#else
+#  define _HashSignStartDataAddress 0
+#endif // CC_HashSignStart
+
+#if       CC_HashSignFinish
+#include    "HashSignFinish_fp.h"
+
+typedef TPM_RC (HashSignFinish_Entry)(
+    HashSignFinish_In*  in,
+    HashSignFinish_Out* out
+);
+
+typedef const struct
+{
+    HashSignFinish_Entry* entry;
+    UINT16                inSize;
+    UINT16                outSize;
+    UINT16                offsetOfTypes;
+    UINT16                paramOffsets[1];
+    BYTE                  types[4];
+} HashSignFinish_COMMAND_DESCRIPTOR_t;
+
+static HashSignFinish_COMMAND_DESCRIPTOR_t _HashSignFinishData = {
+    /* entry         */         &TPM2_HashSignFinish,
+    /* inSize        */         (UINT16)(sizeof(HashSignFinish_In)),
+    /* outSize       */         (UINT16)(sizeof(HashSignFinish_Out)),
+    /* offsetOfTypes */         offsetof(HashSignFinish_COMMAND_DESCRIPTOR_t, types),
+    /* offsets       */         {(UINT16)(offsetof(HashSignFinish_Out, signature))},
+    /* types         */         {TPMI_DH_OBJECT_H_UNMARSHAL,  // sequenceHandle
+                                 END_OF_LIST,
+                                 TPMT_SIGNATURE_P_MARSHAL,    // signature
+                                 END_OF_LIST}
+};
+#  define _HashSignFinishDataAddress (&_HashSignFinishData)
+#else
+#  define _HashSignFinishDataAddress 0
+#endif // CC_HashSignFinish
+
+
 // Lookup table to access the per-command tables above
 
 COMMAND_DESCRIPTOR_t* s_CommandDataArray[] = {
@@ -5559,7 +5629,12 @@ COMMAND_DESCRIPTOR_t* s_CommandDataArray[] = {
 #if (PAD_LIST || CC_Vendor_TCG_Test)
         (COMMAND_DESCRIPTOR_t*)_Vendor_TCG_TestDataAddress,
 #endif // CC_Vendor_TCG_Test
-
+#if (PAD_LIST || CC_HashSignStart)
+        (COMMAND_DESCRIPTOR_t*)_HashSignStartDataAddress,
+#endif
+#if (PAD_LIST || CC_HashSignFinish)
+        (COMMAND_DESCRIPTOR_t*)_HashSignFinishDataAddress,
+#endif
         0
 };
 

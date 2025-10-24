@@ -24,18 +24,18 @@ TPM_RC CryptDilithiumGenerateKey(
     if(publicArea->parameters.asymDetail.scheme.scheme != TPM_ALG_NULL)
         return TPM_RCS_SCHEME;
 
-    UINT16 level = publicArea->parameters.dilithiumDetail.securityLevel;
+    UINT8 level = publicArea->parameters.dilithiumDetail.securityLevel;
     if(level != 2 && level != 3 && level != 5)
         return TPM_RC_VALUE;
 
-    UINT16 pub_cap = (UINT16)sizeof(publicArea->unique.dilithium.t.buffer);
-    UINT16 prv_cap = (UINT16)sizeof(sensitive->sensitive.dilithium.t.buffer);
+    UINT16   pub_cap = (UINT16)sizeof(publicArea->unique.dilithium.t.buffer);
+    UINT16   prv_cap = (UINT16)sizeof(sensitive->sensitive.dilithium.t.buffer);
 
-    int    prc     = _plat__Dilithium_KeyGen(level,
-                                      &pub_cap,
-                                      publicArea->unique.dilithium.t.buffer,
-                                      &prv_cap,
-                                      sensitive->sensitive.dilithium.t.buffer);
+    uint32_t prc     = _plat__Dilithium_KeyGen(level,
+                                           publicArea->unique.dilithium.t.buffer,
+                                           &pub_cap,
+                                           sensitive->sensitive.dilithium.t.buffer,
+                                           &prv_cap);
     if(prc != 0)
         return TPM_RC_FAILURE;
 
@@ -46,52 +46,4 @@ TPM_RC CryptDilithiumGenerateKey(
     return TPM_RC_SUCCESS;
 }
 
-// Sign a digest with Dilithium private key
-// TPM_RC CryptDilithiumSign(
-//     TPMT_SIGNATURE* signature, OBJECT* signKey, TPM2B_DIGEST* digest)
-// {
-//     // Require sigAlg == TPM_ALG_DILITHIUM (set by caller per CryptSign pattern)
-//     if(signature->sigAlg != TPM_ALG_DILITHIUM)
-//         return TPM_RC_SCHEME;
-
-//     // Fill hashAlg from caller’s scheme already done in CryptSign; ensure non-NULL
-//     // if(signature->signature.dilithium.hash == TPM_ALG_NULL)
-//     //     ;  // allowed: we still sign the given digest bytes
-
-//     // Execute sign over digest
-//     UINT16 sig_cap = (UINT16)sizeof(signature->signature.dilithium.sig.t.buffer);
-//     int    prc = _plat__Dilithium_Sign(signKey->sensitive.sensitive.dilithium.t.size,
-//                                     signKey->sensitive.sensitive.dilithium.t.buffer,
-//                                     (UINT16)digest->t.size,
-//                                     digest->t.buffer,
-//                                     &sig_cap,
-//                                     signature->signature.dilithium.sig.t.buffer);
-//     if(prc != 0)
-//         return TPM_RC_FAILURE;
-
-//     signature->signature.dilithium.sig.t.size = sig_cap;
-//     return TPM_RC_SUCCESS;
-// }
-
-// Verify a digest signature with Dilithium public key
-// TPM_RC CryptDilithiumValidateSignature(
-//     TPMT_SIGNATURE* signature, OBJECT* signObject, TPM2B_DIGEST* digest)
-// {
-//     if(signature->sigAlg != TPM_ALG_DILITHIUM)
-//         return TPM_RC_SCHEME;
-
-//     int verified = 0;
-//     int prc =
-//         _plat__Dilithium_Verify(signObject->publicArea.unique.dilithium.t.size,
-//                                 signObject->publicArea.unique.dilithium.t.buffer,
-//                                 (UINT16)digest->t.size,
-//                                 digest->t.buffer,
-//                                 signature->signature.dilithium.sig.t.size,
-//                                 signature->signature.dilithium.sig.t.buffer,
-//                                 &verified);
-//     if(prc != 0)
-//         return TPM_RC_FAILURE;
-
-//     return verified ? TPM_RC_SUCCESS : TPM_RC_SIGNATURE;
-// }
 #endif  // ALG_DILITHIUM

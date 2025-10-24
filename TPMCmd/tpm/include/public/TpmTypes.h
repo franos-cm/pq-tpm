@@ -303,11 +303,11 @@ typedef UINT32 TPM_CC;
 #define TPM_CC_NV_DefineSpace2            (TPM_CC)(0x0000019D)
 #define TPM_CC_NV_ReadPublic2             (TPM_CC)(0x0000019E)
 #define TPM_CC_SetCapability              (TPM_CC)(0x0000019F)
-#define TPM_CC_HashSign                   (TPM_CC)(0x200001A0)
-#define TPM_CC_HashVerify                 (TPM_CC)(0x200001A1)
-#define TPM_CC_LAST                       (TPM_CC)(0x000001A1)
+#define TPM_CC_LAST                       (TPM_CC)(0x0000019F)
 #define CC_VEND                           (TPM_CC)(0x20000000)
 #define TPM_CC_Vendor_TCG_Test            (TPM_CC)(0x20000000)
+#define TPM_CC_HashSignStart              (TPM_CC)(0x200001A0)
+#define TPM_CC_HashSignFinish             (TPM_CC)(0x200001A1)
 
 // This large macro is needed to determine the maximum commandIndex. This value
 // is needed in order to size typdef'ed structures. As a consequence, the
@@ -455,7 +455,7 @@ typedef UINT32 TPM_CC;
      + (ADD_FILL || CC_NV_ReadPublic2)               /* 0x0000019E */ \
      + (ADD_FILL || CC_SetCapability)                /* 0x0000019F */ \
     )
-#define VENDOR_COMMAND_ARRAY_SIZE (CC_Vendor_TCG_Test)
+#define VENDOR_COMMAND_ARRAY_SIZE (CC_Vendor_TCG_Test + CC_HashSignStart + CC_HashSignFinish)
 #define COMMAND_COUNT             (LIBRARY_COMMAND_ARRAY_SIZE + VENDOR_COMMAND_ARRAY_SIZE)
 
 // Table "Definition of TPM_RC Constants" (Part 2: Structures)
@@ -2644,7 +2644,7 @@ typedef struct
 {
     TPMT_SYM_DEF_OBJECT symmetric;   // must be TPM_ALG_NULL for non-parent signing keys
     TPMT_ASYM_SCHEME    scheme;      // TPM_ALG_NULL (no scheme binding)
-    UINT16              securityLevel;
+    UINT8               securityLevel;
     TPMI_ALG_HASH       nameHashAlg;  // optional name-domain hash, usually TPM_ALG_SHA256
 } TPMS_DILITHIUM_PARMS;
 

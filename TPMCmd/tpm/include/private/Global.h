@@ -1318,7 +1318,7 @@ EXTERN int s_freeSessionSlots;
 // s_actionIoBuffer. The value of s_actionIoAllocation is the number of UINT64 values
 // allocated. It is used to set the pointer for the response structure. The command
 // dispatch code will marshal the response values into the final output buffer.
-EXTERN UINT64 s_actionIoBuffer[2048];  // action I/O buffer. NOTE: raised for Dilithium
+EXTERN UINT64 s_actionIoBuffer[1024];  // action I/O buffer. NOTE: raised for Dilithium
 EXTERN UINT32 s_actionIoAllocation;   // number of UIN64 allocated for the
                                       // action input structure
 #  endif                              // IO_BUFFER_C

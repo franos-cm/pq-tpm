@@ -6086,7 +6086,7 @@ TPMS_DILITHIUM_PARMS_Unmarshal(TPMS_DILITHIUM_PARMS* target, BYTE** buffer, INT3
     // target->scheme.details is not present for NULL; no unmarshalling
 
     // remaining fields
-    result = UINT16_Unmarshal(&target->securityLevel, buffer, size);
+    result = UINT8_Unmarshal(&target->securityLevel, buffer, size);
     if(result != TPM_RC_SUCCESS) return result;
     return TPMI_ALG_HASH_Unmarshal(&target->nameHashAlg, buffer, size, FALSE);
 }
@@ -6104,7 +6104,7 @@ TPMS_DILITHIUM_PARMS_Marshal(TPMS_DILITHIUM_PARMS* source, BYTE** buffer, INT32*
     result += TPM_ALG_ID_Marshal(&schemeAlg, buffer, size);
 
     // remaining fields
-    result += UINT16_Marshal(&source->securityLevel, buffer, size);
+    result += UINT8_Marshal(&source->securityLevel, buffer, size);
     result += TPMI_ALG_HASH_Marshal(&source->nameHashAlg, buffer, size);
     return result;
 }

@@ -1,5 +1,9 @@
 #include "Tpm.h"
 #include "SequenceUpdate_fp.h"
+#if ALG_DILITHIUM
+#  include "private/DilithiumSequence.h"
+#  include "platform_interface/tpm_to_platform_interface.h"
+#endif
 
 #if CC_SequenceUpdate  // Conditional expansion of this file
 
@@ -21,6 +25,23 @@ TPM2_SequenceUpdate(SequenceUpdate_In* in  // IN: input parameter list
     // Get sequence object pointer
     object     = HandleToObject(in->sequenceHandle);
     hashObject = (HASH_OBJECT*)object;
+
+#  if ALG_DILITHIUM
+    // Dilithium streaming path
+    DLHS_CTX s;
+    if(ObjectIsSequence(object) && DLHS_LoadHandle(in->sequenceHandle, &s))
+    {
+        if(in->buffer.t.size == 0 || in->buffer.t.size > s.remaining)
+            return TPM_RCS_SIZE + RC_SequenceUpdate_buffer;
+        int prc = _plat__Dilithium_HashSignUpdate(
+            s.ctx_id, in->buffer.t.buffer, in->buffer.t.size);
+        if(prc != 0)
+            return TPM_RC_FAILURE;
+        s.remaining -= in->buffer.t.size;
+        (void)DLHS_StoreHandle(in->sequenceHandle, &s);
+        return TPM_RC_SUCCESS;
+    }
+#  endif  // ALG_DILITHIUM
 
     // Check that referenced object is a sequence object.
     if(!ObjectIsSequence(object))

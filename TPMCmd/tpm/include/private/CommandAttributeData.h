@@ -407,6 +407,14 @@ const TPMA_CC    s_ccAttr [] = {
 #if (PAD_LIST || CC_Vendor_TCG_Test)
         TPMA_CC_INITIALIZER(0x0000, 0, 0, 0, 0, 0, 0, 1, 0),
 #endif
+#if (PAD_LIST || CC_HashSignStart)
+        // Vendor: HashSignStart (code = 0x200001A0), 1 in-handle, 1 response handle
+        TPMA_CC_INITIALIZER(0x01A0, 0, 0, 0, 0, 1, 1, 1, 0),
+#endif
+#if (PAD_LIST || CC_HashSignFinish)
+        // Vendor: HashSignFinish (code = 0x200001A1), 1 in-handle, no response handle
+        TPMA_CC_INITIALIZER(0x01A1, 0, 0, 0, 0, 1, 0, 1, 0),
+#endif
         TPMA_ZERO_INITIALIZER()
 };
 
@@ -927,6 +935,14 @@ const COMMAND_ATTRIBUTES    s_commandAttributes [] = {
 #if (PAD_LIST || CC_Vendor_TCG_Test)
         (COMMAND_ATTRIBUTES)(CC_Vendor_TCG_Test * // 0x0000
             (IS_IMPLEMENTED+DECRYPT_2+ENCRYPT_2)),
+#endif
+#if (PAD_LIST || CC_HashSignStart)
+        (COMMAND_ATTRIBUTES)(CC_HashSignStart * // 0x01A0
+            (IS_IMPLEMENTED+HANDLE_1_USER+R_HANDLE)),
+#endif
+#if (PAD_LIST || CC_HashSignFinish)
+        (COMMAND_ATTRIBUTES)(CC_HashSignFinish * // 0x01A1
+            (IS_IMPLEMENTED+HANDLE_1_USER)),
 #endif
         0
 };

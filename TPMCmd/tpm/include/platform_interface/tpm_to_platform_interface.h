@@ -220,26 +220,26 @@ LIB_EXPORT void _plat__TearDown();
 
 #if ALG_DILITHIUM
 // Keygen: returns blobs for the requested security level.
-LIB_EXPORT int _plat__Dilithium_KeyGen(uint16_t  level,
-                                       uint16_t* pk_size,
-                                       uint8_t*  pk_ptr,
-                                       uint16_t* sk_size,
-                                       uint8_t*  sk_ptr);
+LIB_EXPORT uint32_t _plat__Dilithium_KeyGen(uint8_t sec_level,
+                                            uint8_t *pk, uint16_t *pk_size,
+                                            uint8_t *sk, uint16_t *sk_size);
 
-LIB_EXPORT int _plat__Dilithium_Sign(uint16_t       prv_size,
-                                     const uint8_t* prv_key,
-                                     uint16_t       digest_size,
-                                     const uint8_t* digest,
-                                     uint16_t*      sig_size,
-                                     uint8_t*       sig);
 
-LIB_EXPORT int _plat__Dilithium_Verify(uint16_t       pub_size,
-                                       const uint8_t* pub_key,
-                                       uint16_t       digest_size,
-                                       const uint8_t* digest,
-                                       uint16_t       sig_size,
-                                       const uint8_t* sig,
-                                       int*           verified);
+// Start streaming hash+sign: platform ingests part of sk and message_size, returns ctx_id
+LIB_EXPORT uint32_t _plat__Dilithium_HashSignStart(uint8_t sec_level, uint32_t message_size,
+                                                   const uint8_t* sk, uint16_t sk_size,
+                                                   uint32_t* ctx_id);
+
+// Stream message chunks to hardware
+LIB_EXPORT uint32_t _plat__Dilithium_HashSignUpdate(uint32_t ctx_id,
+                                                    const uint8_t* chunk,
+                                                    uint16_t chunk_size);
+
+// Finish: platform ingests remaining part of sk and produces the signature
+LIB_EXPORT uint32_t _plat__Dilithium_HashSignFinish(uint32_t ctx_id, uint8_t sec_level,
+                                                    const uint8_t* sk, uint16_t sk_size,
+                                                    uint8_t* sig, uint16_t* sig_size);
+
 #endif
 
 //** From PlatformACT.c

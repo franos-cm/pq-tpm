@@ -27,19 +27,17 @@ TPM_RC TPM2_HashSignStart(HashSignStart_In* in, HashSignStart_Out* out)
         return TPM_RC_FAILURE;
 
     TPM2B_AUTH zeroAuth = {.t = {.size = 0}};
-    TPM_RC     rc       = ObjectCreateEventSequence(&zeroAuth, &out->sequenceHandle);
+    TPM_RC     rc       = ObjectCreateDLHSSequence(&zeroAuth, &out->sequenceHandle);
     if(rc != TPM_RC_SUCCESS)
         return rc;
 
-    // Stash DLHS context keyed by the sequence handle (do not overwrite seq->auth)
-    DLHS_CTX s = {
-        .magic     = DLHS_MAGIC,
-        .ctx_id    = ctx_id,
-        .remaining = in->totalLen,
-        .keyHandle = in->keyHandle
-    };
-    if(!DLHS_StoreHandle(out->sequenceHandle, &s))
+    // Stash DLHS context keyed by the sequence handle
+    HASH_OBJECT* seq = (HASH_OBJECT*)HandleToObject(out->sequenceHandle);
+    if (seq == NULL)
         return TPM_RC_FAILURE;
+    seq->state.dlhsState.ctx_id    = ctx_id;
+    seq->state.dlhsState.remaining = in->totalLen;
+    seq->state.dlhsState.keyHandle = in->keyHandle;
 #endif
     return TPM_RC_SUCCESS;
 }

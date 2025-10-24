@@ -26,29 +26,28 @@ TPM2_SequenceUpdate(SequenceUpdate_In* in  // IN: input parameter list
     object     = HandleToObject(in->sequenceHandle);
     hashObject = (HASH_OBJECT*)object;
 
-#  if ALG_DILITHIUM
-    // Dilithium streaming path
-    DLHS_CTX s;
-    if(ObjectIsSequence(object) && DLHS_LoadHandle(in->sequenceHandle, &s))
-    {
-        if(in->buffer.t.size == 0 || in->buffer.t.size > s.remaining)
-            return TPM_RCS_SIZE + RC_SequenceUpdate_buffer;
-        int prc = _plat__Dilithium_HashSignUpdate(
-            s.ctx_id, in->buffer.t.buffer, in->buffer.t.size);
-        if(prc != 0)
-            return TPM_RC_FAILURE;
-        s.remaining -= in->buffer.t.size;
-        (void)DLHS_StoreHandle(in->sequenceHandle, &s);
-        return TPM_RC_SUCCESS;
-    }
-#  endif  // ALG_DILITHIUM
-
     // Check that referenced object is a sequence object.
     if(!ObjectIsSequence(object))
         return TPM_RCS_MODE + RC_SequenceUpdate_sequenceHandle;
 
-    // Internal Data Update
+#  if ALG_DILITHIUM
+    if(object->attributes.dlhsSeq == SET)
+    {
+        DLHS_STATE* ds = &hashObject->state.dlhsState;
+        if(in->buffer.t.size == 0 || in->buffer.t.size > ds->remaining)
+            return TPM_RCS_SIZE + RC_SequenceUpdate_buffer;
 
+        int prc = _plat__Dilithium_HashSignUpdate(
+            ds->ctx_id, in->buffer.t.buffer, in->buffer.t.size);
+        if(prc != 0)
+            return TPM_RC_FAILURE;
+
+        ds->remaining -= in->buffer.t.size;
+        return TPM_RC_SUCCESS;
+    }
+#  endif  // ALG_DILITHIUM
+
+    // Internal Data Update
     if(object->attributes.eventSeq == SET)
     {
         // Update event sequence object

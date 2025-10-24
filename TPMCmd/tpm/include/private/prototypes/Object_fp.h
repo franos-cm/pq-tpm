@@ -154,6 +154,8 @@ ObjectCreateEventSequence(TPM2B_AUTH*     auth,      // IN: authValue
                           TPMI_DH_OBJECT* newHandle  // OUT: sequence object handle
 );
 
+TPM_RC ObjectCreateDLHSSequence(TPM2B_AUTH* auth, TPMI_DH_OBJECT* newHandle);
+
 //*** ObjectTerminateEvent()
 // This function is called to close out the event sequence and clean up the hash
 // context states.

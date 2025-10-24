@@ -5,13 +5,14 @@ TPM_RC TPM2_HashSignFinish(HashSignFinish_In* in, HashSignFinish_Out* out)
 {
 #if ALG_DILITHIUM
     HASH_OBJECT* seq = (HASH_OBJECT*)HandleToObject(in->sequenceHandle);
-    DLHS_CTX     s;
-    if(!DLHS_LoadHandle(in->sequenceHandle, &s))
+    if(seq == NULL || seq->attributes.dlhsSeq == CLEAR)
         return TPM_RCS_MODE + RC_HashSignFinish_sequenceHandle;
-    if(s.remaining != 0)
+
+    DLHS_STATE* ds = &seq->state.dlhsState;
+    if(ds->remaining != 0)
         return TPM_RCS_SIZE + RC_HashSignFinish_sequenceHandle;
 
-    OBJECT* keyObj = HandleToObject((TPMI_DH_OBJECT)s.keyHandle);
+    OBJECT* keyObj = HandleToObject(ds->keyHandle);
     if(keyObj == NULL || keyObj->publicArea.type != TPM_ALG_DILITHIUM)
         return TPM_RCS_HANDLE + RC_HashSignFinish_sequenceHandle;
 
@@ -22,7 +23,7 @@ TPM_RC TPM2_HashSignFinish(HashSignFinish_In* in, HashSignFinish_Out* out)
 
     UINT16 sig_cap = (UINT16)sizeof(out->signature.signature.dilithium.sig.t.buffer);
     int    prc     = _plat__Dilithium_HashSignFinish(
-        s.ctx_id,
+        ds->ctx_id,
         level,
         keyObj->sensitive.sensitive.dilithium.t.buffer,
         keyObj->sensitive.sensitive.dilithium.t.size,
@@ -33,9 +34,14 @@ TPM_RC TPM2_HashSignFinish(HashSignFinish_In* in, HashSignFinish_Out* out)
 
     out->signature.signature.dilithium.sig.t.size = sig_cap;
 
-    // Evict the sequence object and clear our DLHS bookkeeping for this handle
+    // Evict the sequence object and clear state
     seq->attributes.evict = SET;
-    DLHS_ClearHandle(in->sequenceHandle);
-#endif
+    seq->attributes.dlhsSeq = CLEAR;
+    MemorySet(ds, 0, sizeof(*ds));
     return TPM_RC_SUCCESS;
+#else
+    NOT_REFERENCED(in);
+    NOT_REFERENCED(out);
+    return TPM_RC_FAILURE;
+#endif
 }

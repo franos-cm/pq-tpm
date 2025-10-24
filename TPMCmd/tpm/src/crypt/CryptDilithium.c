@@ -1,5 +1,4 @@
 #include "Tpm.h"
-// TODO: check if I need all these imports, RSA doesnt
 #include "Marshal.h"
 #include "InternalRoutines.h"
 #include "platform_interface/tpm_to_platform_interface.h"
@@ -44,6 +43,18 @@ TPM_RC CryptDilithiumGenerateKey(
     sensitive->sensitive.dilithium.t.size = prv_cap;
 
     return TPM_RC_SUCCESS;
+}
+
+void CryptDilithiumExportState(const DLHS_STATE* in, BYTE* out)
+{
+    if(in && out)
+        memcpy(out, in, sizeof(*in));
+}
+
+void CryptDilithiumImportState(DLHS_STATE* out, const BYTE* in)
+{
+    if(in && out)
+        memcpy(out, in, sizeof(*out));
 }
 
 #endif  // ALG_DILITHIUM

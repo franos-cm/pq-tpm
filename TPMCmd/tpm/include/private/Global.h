@@ -48,6 +48,7 @@ _NORMAL_WARNING_LEVEL_
 #  include "CryptTest.h"
 #  include "NV.h"
 #  include "ACT.h"
+#  include "DilithiumSequence.h"
 
 //** Defines and Types
 
@@ -118,12 +119,13 @@ typedef struct
                                 //   object
     unsigned hashSeq    : 1;    //9) SET for a hash sequence object
     unsigned eventSeq   : 1;    //10) SET for an event sequence object
-    unsigned ticketSafe : 1;    //11) SET if a ticket is safe to create
+    unsigned dlhsSeq    : 1;    //11) SET for a hashAndSign sequence object
+    unsigned ticketSafe : 1;    //12) SET if a ticket is safe to create
                                 //    for hash sequence object
-    unsigned firstBlock : 1;    //12) SET if the first block of hash
+    unsigned firstBlock : 1;    //13) SET if the first block of hash
                                 //    data has been received.  It
                                 //    works with ticketSafe bit
-    unsigned isParent : 1;      //13) SET if the key has the proper
+    unsigned isParent : 1;      //14) SET if the key has the proper
                                 //    attributes to be a parent key
     //   unsigned            privateExp : 1;    //14) SET when the private exponent
     //                                          //    of an RSA key has been validated.
@@ -198,6 +200,9 @@ typedef struct HASH_OBJECT
     {
         HASH_STATE hashState[HASH_COUNT];
         HMAC_STATE hmacState;
+        # if ALG_DILITHIUM
+        DLHS_STATE dlhsState;
+        # endif
     } state;
 } HASH_OBJECT;
 

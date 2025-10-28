@@ -5,8 +5,10 @@
 TPM_RC CryptDilithiumGenerateKey(
     TPMT_PUBLIC* publicArea, TPMT_SENSITIVE* sensitive, RAND_STATE* rand);
 
-// Export/import DLHS state for sequence context save/load
-void CryptDilithiumExportState(const DLHS_STATE* in, BYTE* out);
-void CryptDilithiumImportState(DLHS_STATE* out, const BYTE* in);
+// Export/import states for sequence context save/load
+void CryptExportHashSignState(const DLHS_STATE* in, BYTE* out);
+void CryptImportHashSignState(DLHS_STATE* out, const BYTE* in);
+void CryptExportHashVerifyState(const DLHV_STATE* in, BYTE* out);
+void CryptImportHashVerifyState(DLHV_STATE* out, const BYTE* in);
 
 #endif  // ALG_DILITHIUM

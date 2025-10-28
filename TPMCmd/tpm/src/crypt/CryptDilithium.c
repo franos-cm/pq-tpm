@@ -45,16 +45,58 @@ TPM_RC CryptDilithiumGenerateKey(
     return TPM_RC_SUCCESS;
 }
 
-void CryptDilithiumExportState(const DLHS_STATE* in, BYTE* out)
+void CryptExportHashSignState(const DLHS_STATE* in, BYTE* out)
 {
     if(in && out)
         memcpy(out, in, sizeof(*in));
 }
 
-void CryptDilithiumImportState(DLHS_STATE* out, const BYTE* in)
+void CryptImportHashSignState(DLHS_STATE* out, const BYTE* in)
 {
     if(in && out)
         memcpy(out, in, sizeof(*out));
+}
+
+// Portable on-context representation of DLHV_STATE
+typedef struct
+{
+    UINT32            ctx_id;
+    UINT32            remaining;
+    TPMI_DH_OBJECT    keyHandle;
+    TPMI_ALG_HASH     ticketHashAlg;  // mirror DLHV_STATE
+    EXPORT_HASH_STATE ticketHash;
+} DLHV_EXPORT_STATE;
+
+void CryptExportHashVerifyState(const DLHV_STATE* in, BYTE* out)
+{
+    if(!in || !out)
+        return;
+
+    MUST_BE(sizeof(DLHV_EXPORT_STATE) == sizeof(DLHV_STATE));
+
+    DLHV_EXPORT_STATE w;
+    w.ctx_id        = in->ctx_id;
+    w.remaining     = in->remaining;
+    w.keyHandle     = in->keyHandle;
+    w.ticketHashAlg = in->ticketHashAlg;
+    CryptHashExportState(&in->ticketHash, &w.ticketHash);
+    memcpy(out, &w, sizeof(w));
+}
+
+void CryptImportHashVerifyState(DLHV_STATE* out, const BYTE* in)
+{
+    if(!in || !out)
+        return;
+
+    MUST_BE(sizeof(DLHV_EXPORT_STATE) == sizeof(DLHV_STATE));
+
+    DLHV_EXPORT_STATE w;
+    memcpy(&w, in, sizeof(w));
+    out->ctx_id        = w.ctx_id;
+    out->remaining     = w.remaining;
+    out->keyHandle     = w.keyHandle;
+    out->ticketHashAlg = w.ticketHashAlg;
+    CryptHashImportState(&out->ticketHash, &w.ticketHash);
 }
 
 #endif  // ALG_DILITHIUM

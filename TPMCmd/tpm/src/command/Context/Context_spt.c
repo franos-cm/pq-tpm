@@ -200,7 +200,15 @@ void SequenceDataExport(
     {
         size_t off = (BYTE*)&object->state.dlhsState - (BYTE*)object;
         BYTE*  out = &((BYTE*)exportObject)[off];
-        CryptDilithiumExportState(&object->state.dlhsState, out);
+        CryptExportHashSignState(&object->state.dlhsState, out);
+        return;
+    }
+    // Verify sequence
+    if(object->attributes.dlhvSeq == SET)
+    {
+        size_t off = (BYTE*)&object->state.dlhvState - (BYTE*)object;
+        BYTE*  out = &((BYTE*)exportObject)[off];
+        CryptExportHashVerifyState(&object->state.dlhvState, out);
         return;
     }
 #endif
@@ -234,11 +242,20 @@ void SequenceDataImport(
 {
 #if ALG_DILITHIUM
     // Detect Dilithium vendor state in the buffer and import it
-    if(object->attributes.dlhsSeq == SET) {
+    if(object->attributes.dlhsSeq == SET)
+    {
         size_t     off = (BYTE*)&object->state.dlhsState - (BYTE*)object;
         DLHS_STATE tmp;
-        CryptDilithiumImportState(&tmp, &((const BYTE*)exportObject)[off]);
+        CryptImportHashSignState(&tmp, &((const BYTE*)exportObject)[off]);
         object->state.dlhsState = tmp;
+        return;
+    }
+    if(object->attributes.dlhvSeq == SET)
+    {
+        size_t     off = (BYTE*)&object->state.dlhvState - (BYTE*)object;
+        DLHV_STATE tmp;
+        CryptImportHashVerifyState(&tmp, &((const BYTE*)exportObject)[off]);
+        object->state.dlhvState = tmp;
         return;
     }
 #endif

@@ -388,5 +388,11 @@
 #if CC_HashSignFinish
 #  include "HashSignFinish_fp.h"
 #endif
+#if CC_HashVerifyStart
+#  include "HashVerifyStart_fp.h"
+#endif
+#if CC_HashVerifyFinish
+#  include "HashVerifyFinish_fp.h"
+#endif
 
 #endif  // _COMMANDS_H_

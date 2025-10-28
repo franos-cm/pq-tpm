@@ -308,6 +308,8 @@ typedef UINT32 TPM_CC;
 #define TPM_CC_Vendor_TCG_Test            (TPM_CC)(0x20000000)
 #define TPM_CC_HashSignStart              (TPM_CC)(0x200001A0)
 #define TPM_CC_HashSignFinish             (TPM_CC)(0x200001A1)
+#define TPM_CC_HashVerifyStart            (TPM_CC)(0x200001A2)
+#define TPM_CC_HashVerifyFinish           (TPM_CC)(0x200001A3)
 
 // This large macro is needed to determine the maximum commandIndex. This value
 // is needed in order to size typdef'ed structures. As a consequence, the
@@ -455,7 +457,7 @@ typedef UINT32 TPM_CC;
      + (ADD_FILL || CC_NV_ReadPublic2)               /* 0x0000019E */ \
      + (ADD_FILL || CC_SetCapability)                /* 0x0000019F */ \
     )
-#define VENDOR_COMMAND_ARRAY_SIZE (CC_Vendor_TCG_Test + CC_HashSignStart + CC_HashSignFinish)
+#define VENDOR_COMMAND_ARRAY_SIZE (CC_Vendor_TCG_Test + CC_HashSignStart + CC_HashSignFinish + CC_HashVerifyStart + CC_HashVerifyFinish)
 #define COMMAND_COUNT             (LIBRARY_COMMAND_ARRAY_SIZE + VENDOR_COMMAND_ARRAY_SIZE)
 
 // Table "Definition of TPM_RC Constants" (Part 2: Structures)
@@ -2493,7 +2495,7 @@ typedef union
 
 typedef struct
 {
-    TPMI_ALG_HASH             hash; // TPM_ALG_NULL if HW hashed internally. TODO: check this
+    TPMI_ALG_HASH             hash; // TPM_ALG_NULL, kept for compat purposes
     TPM2B_SIGNATURE_DILITHIUM sig;
 } TPMS_SIGNATURE_DILITHIUM;
 #endif // ALG_DILITHIUM

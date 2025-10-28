@@ -120,20 +120,21 @@ typedef struct
     unsigned hashSeq    : 1;    //9) SET for a hash sequence object
     unsigned eventSeq   : 1;    //10) SET for an event sequence object
     unsigned dlhsSeq    : 1;    //11) SET for a hashAndSign sequence object
-    unsigned ticketSafe : 1;    //12) SET if a ticket is safe to create
+    unsigned dlhvSeq    : 1;    //12) SET for a hashAndVerify sequence object
+    unsigned ticketSafe : 1;    //13) SET if a ticket is safe to create
                                 //    for hash sequence object
-    unsigned firstBlock : 1;    //13) SET if the first block of hash
+    unsigned firstBlock : 1;    //14) SET if the first block of hash
                                 //    data has been received.  It
                                 //    works with ticketSafe bit
-    unsigned isParent : 1;      //14) SET if the key has the proper
+    unsigned isParent : 1;      //15) SET if the key has the proper
                                 //    attributes to be a parent key
-    //   unsigned            privateExp : 1;    //14) SET when the private exponent
+    //   unsigned            privateExp : 1;    //16) SET when the private exponent
     //                                          //    of an RSA key has been validated.
     unsigned not_used_14 : 1;
-    unsigned occupied    : 1;  //15) SET when the slot is occupied.
-    unsigned derivation  : 1;  //16) SET when the key is a derivation
+    unsigned occupied    : 1;  //17) SET when the slot is occupied.
+    unsigned derivation  : 1;  //18) SET when the key is a derivation
                                //        parent
-    unsigned external : 1;     //17) SET when the object is loaded with
+    unsigned external : 1;     //19) SET when the object is loaded with
                                //    TPM2_LoadExternal();
 } OBJECT_ATTRIBUTES;
 
@@ -202,6 +203,7 @@ typedef struct HASH_OBJECT
         HMAC_STATE hmacState;
         # if ALG_DILITHIUM
         DLHS_STATE dlhsState;
+        DLHV_STATE dlhvState;
         # endif
     } state;
 } HASH_OBJECT;

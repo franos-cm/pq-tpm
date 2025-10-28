@@ -5545,7 +5545,7 @@ TPM_RC
 TPMS_SIGNATURE_DILITHIUM_Unmarshal(TPMS_SIGNATURE_DILITHIUM* target, BYTE** buffer, INT32* size)
 {
     TPM_RC result;
-    result = TPMI_ALG_HASH_Unmarshal((TPMI_ALG_HASH*)&target->hash, buffer, size, 0);
+    result = TPMI_ALG_HASH_Unmarshal((TPMI_ALG_HASH*)&target->hash, buffer, size, true);
     if(result == TPM_RC_SUCCESS)
         result = TPM2B_SIGNATURE_DILITHIUM_Unmarshal((TPM2B_SIGNATURE_DILITHIUM*)&target->sig, buffer, size);
     return result;

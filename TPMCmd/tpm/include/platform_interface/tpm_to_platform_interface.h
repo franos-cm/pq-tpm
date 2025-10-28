@@ -8,6 +8,7 @@
 #include <TpmConfiguration/TpmBuildSwitches.h>
 #include <TpmConfiguration/TpmProfile.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 //** From Cancel.c
 
@@ -219,26 +220,44 @@ LIB_EXPORT int _plat__NvCommit(void);
 LIB_EXPORT void _plat__TearDown();
 
 #if ALG_DILITHIUM
-// Keygen: returns blobs for the requested security level.
-LIB_EXPORT uint32_t _plat__Dilithium_KeyGen(uint8_t sec_level,
-                                            uint8_t *pk, uint16_t *pk_size,
-                                            uint8_t *sk, uint16_t *sk_size);
-
-
-// Start streaming hash+sign: platform ingests part of sk and message_size, returns ctx_id
-LIB_EXPORT uint32_t _plat__Dilithium_HashSignStart(uint8_t sec_level, uint32_t message_size,
-                                                   const uint8_t* sk, uint16_t sk_size,
-                                                   uint32_t* ctx_id);
 
 // Stream message chunks to hardware
-LIB_EXPORT uint32_t _plat__Dilithium_HashSignUpdate(uint32_t ctx_id,
-                                                    const uint8_t* chunk,
-                                                    uint16_t chunk_size);
+LIB_EXPORT uint32_t _plat__Dilithium_Update(
+    uint32_t ctx_id, const uint8_t* chunk, uint16_t chunk_size);
+
+// Keygen: returns blobs for the requested security level.
+LIB_EXPORT uint32_t _plat__Dilithium_KeyGen(uint8_t   sec_level,
+                                            uint8_t*  pk,
+                                            uint16_t* pk_size,
+                                            uint8_t*  sk,
+                                            uint16_t* sk_size);
+
+// Start streaming hash+sign: platform ingests part of sk and message_size, returns ctx_id
+LIB_EXPORT uint32_t _plat__Dilithium_HashSignStart(uint8_t        sec_level,
+                                                   uint32_t       message_size,
+                                                   const uint8_t* sk,
+                                                   uint16_t       sk_size,
+                                                   uint32_t*      ctx_id);
 
 // Finish: platform ingests remaining part of sk and produces the signature
-LIB_EXPORT uint32_t _plat__Dilithium_HashSignFinish(uint32_t ctx_id, uint8_t sec_level,
-                                                    const uint8_t* sk, uint16_t sk_size,
-                                                    uint8_t* sig, uint16_t* sig_size);
+LIB_EXPORT uint32_t _plat__Dilithium_HashSignFinish(uint32_t       ctx_id,
+                                                    uint8_t        sec_level,
+                                                    const uint8_t* sk,
+                                                    uint16_t       sk_size,
+                                                    uint8_t*       sig,
+                                                    uint16_t*      sig_size);
+
+// Verify: start with full signature; platform stores any needed parts.
+LIB_EXPORT uint32_t _plat__Dilithium_HashVerifyStart(uint8_t        sec_level,
+                                                     uint32_t       message_size,
+                                                     const uint8_t* pk,
+                                                     uint16_t       pk_size,
+                                                     const uint8_t* sig,
+                                                     uint16_t       sig_size,
+                                                     uint32_t*      ctx_id);
+
+LIB_EXPORT uint32_t _plat__Dilithium_HashVerifyFinish(
+    uint32_t ctx_id, uint8_t sec_level, bool* accepted);
 
 #endif
 

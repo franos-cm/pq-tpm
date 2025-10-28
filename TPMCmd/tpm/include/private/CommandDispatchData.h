@@ -5179,9 +5179,9 @@ static HashSignStart_COMMAND_DESCRIPTOR_t _HashSignStartData = {
     /* inSize        */         (UINT16)(sizeof(HashSignStart_In)),
     /* outSize       */         (UINT16)(sizeof(HashSignStart_Out)),
     /* offsetOfTypes */         offsetof(HashSignStart_COMMAND_DESCRIPTOR_t, types),
-    /* offsets       */         {(UINT16)(offsetof(HashSignStart_In, totalLen))},
+    /* offsets       */         {(UINT16)(offsetof(HashSignStart_In, msgLen))},
     /* types         */         {TPMI_DH_OBJECT_H_UNMARSHAL,  // keyHandle
-                                 UINT32_P_UNMARSHAL,          // totalLen
+                                 UINT32_P_UNMARSHAL,          // msgLen
                                  END_OF_LIST,
                                  TPMI_DH_OBJECT_H_MARSHAL,    // response handle: sequenceHandle
                                  END_OF_LIST}
@@ -5224,6 +5224,87 @@ static HashSignFinish_COMMAND_DESCRIPTOR_t _HashSignFinishData = {
 #else
 #  define _HashSignFinishDataAddress 0
 #endif // CC_HashSignFinish
+
+#if       CC_HashVerifyStart
+#include    "HashVerifyStart_fp.h"
+
+typedef TPM_RC (HashVerifyStart_Entry)(
+    HashVerifyStart_In*  in,
+    HashVerifyStart_Out* out
+);
+
+typedef const struct
+{
+    HashVerifyStart_Entry *entry;
+    UINT16                 inSize;
+    UINT16                 outSize;
+    UINT16                 offsetOfTypes;
+    UINT16                 paramOffsets[2];
+    BYTE                   types[6];
+} HashVerifyStart_COMMAND_DESCRIPTOR_t;
+
+HashVerifyStart_COMMAND_DESCRIPTOR_t _HashVerifyStartData = {
+    /* entry         */ &TPM2_HashVerifyStart,
+    /* inSize        */ (UINT16)(sizeof(HashVerifyStart_In)),
+    /* outSize       */ (UINT16)(sizeof(HashVerifyStart_Out)),
+    /* offsetOfTypes */ offsetof(HashVerifyStart_COMMAND_DESCRIPTOR_t, types),
+    /* paramOffsets  */ {
+        (UINT16)(offsetof(HashVerifyStart_In, msgLen)),
+        (UINT16)(offsetof(HashVerifyStart_In, signature))
+    },
+    /* types         */ {
+        TPMI_DH_OBJECT_H_UNMARSHAL,  // keyHandle
+        UINT32_P_UNMARSHAL,          // msgLen
+        TPMT_SIGNATURE_P_UNMARSHAL,  // signature
+        END_OF_LIST,
+        TPMI_DH_OBJECT_H_MARSHAL,    // sequenceHandle
+        END_OF_LIST
+    }
+};
+
+#define _HashVerifyStartDataAddress (&_HashVerifyStartData)
+#else
+#define _HashVerifyStartDataAddress 0
+#endif // CC_HashVerifyStart
+
+#if       CC_HashVerifyFinish
+#include    "HashVerifyFinish_fp.h"
+
+typedef TPM_RC (HashVerifyFinish_Entry)(
+    HashVerifyFinish_In*  in,
+    HashVerifyFinish_Out* out
+);
+
+typedef const struct
+{
+    HashVerifyFinish_Entry *entry;
+    UINT16                  inSize;
+    UINT16                  outSize;
+    UINT16                  offsetOfTypes;
+    UINT16                  paramOffsets[1];
+    BYTE                    types[5];
+} HashVerifyFinish_COMMAND_DESCRIPTOR_t;
+
+HashVerifyFinish_COMMAND_DESCRIPTOR_t _HashVerifyFinishData = {
+    /* entry         */ &TPM2_HashVerifyFinish,
+    /* inSize        */ (UINT16)(sizeof(HashVerifyFinish_In)),
+    /* outSize       */ (UINT16)(sizeof(HashVerifyFinish_Out)),
+    /* offsetOfTypes */ offsetof(HashVerifyFinish_COMMAND_DESCRIPTOR_t, types),
+    /* paramOffsets  */ {
+        (UINT16)(offsetof(HashVerifyFinish_Out, validation))
+    },
+    /* types         */ {
+        TPMI_DH_OBJECT_H_UNMARSHAL,   // sequenceHandle
+        END_OF_LIST,
+        TPMT_TK_VERIFIED_P_MARSHAL,   // validation
+        END_OF_LIST
+    }
+};
+
+#define _HashVerifyFinishDataAddress (&_HashVerifyFinishData)
+#else
+#define _HashVerifyFinishDataAddress 0
+#endif // CC_HashVerifyFinish
 
 
 // Lookup table to access the per-command tables above
@@ -5634,6 +5715,12 @@ COMMAND_DESCRIPTOR_t* s_CommandDataArray[] = {
 #endif
 #if (PAD_LIST || CC_HashSignFinish)
         (COMMAND_DESCRIPTOR_t*)_HashSignFinishDataAddress,
+#endif
+#if (PAD_LIST || CC_HashVerifyStart)
+        (COMMAND_DESCRIPTOR_t*)_HashVerifyStartDataAddress,
+#endif
+#if (PAD_LIST || CC_HashVerifyFinish)
+        (COMMAND_DESCRIPTOR_t*)_HashVerifyFinishDataAddress,
 #endif
         0
 };

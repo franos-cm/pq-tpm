@@ -96,8 +96,11 @@ BOOL ObjectIsSequence(OBJECT* object  // IN: handle to be checked
 )
 {
     pAssert(object != NULL);
-    return (object->attributes.hmacSeq == SET || object->attributes.hashSeq == SET
-            || object->attributes.eventSeq == SET || object->attributes.dlhsSeq == SET);
+    return (object->attributes.hmacSeq == SET
+            || object->attributes.hashSeq == SET
+            || object->attributes.eventSeq == SET
+            || object->attributes.dlhsSeq == SET
+            || object->attributes.dlhvSeq == SET);
 }
 
 //*** HandleToObject()
@@ -548,8 +551,29 @@ ObjectCreateDLHSSequence(TPM2B_AUTH*     auth,      // IN: authValue
     hashObject->attributes.eventSeq = CLEAR;
     hashObject->attributes.hashSeq  = CLEAR;
     hashObject->attributes.hmacSeq  = CLEAR;
+    hashObject->attributes.dlhvSeq = CLEAR;
 
     // Union was zeroed in AllocateSequenceSlot; no crypt state to init
+    return TPM_RC_SUCCESS;
+}
+
+TPM_RC
+ObjectCreateDLHVSequence(TPM2B_AUTH*     auth,      // IN: authValue
+                         TPMI_DH_OBJECT* newHandle) // OUT: sequence handle
+{
+    HASH_OBJECT* hashObject = AllocateSequenceSlot(newHandle, auth);
+    if(hashObject == NULL)
+        return TPM_RC_OBJECT_MEMORY;
+
+    // Mark as Dilithium verify sequence only
+    hashObject->attributes.dlhvSeq = SET;
+    // Ensure no standard seq bits are set
+    hashObject->attributes.dlhsSeq = CLEAR;
+    hashObject->attributes.eventSeq = CLEAR;
+    hashObject->attributes.hashSeq  = CLEAR;
+    hashObject->attributes.hmacSeq  = CLEAR;
+
+    // ticketHash will be initialized by Start; union was zeroed at allocate
     return TPM_RC_SUCCESS;
 }
 

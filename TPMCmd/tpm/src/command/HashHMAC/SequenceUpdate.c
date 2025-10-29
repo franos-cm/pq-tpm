@@ -1,5 +1,9 @@
 #include "Tpm.h"
 #include "SequenceUpdate_fp.h"
+#if ALG_DILITHIUM
+#  include "private/DilithiumSequence.h"
+#  include "platform_interface/tpm_to_platform_interface.h"
+#endif
 
 #if CC_SequenceUpdate  // Conditional expansion of this file
 
@@ -26,8 +30,41 @@ TPM2_SequenceUpdate(SequenceUpdate_In* in  // IN: input parameter list
     if(!ObjectIsSequence(object))
         return TPM_RCS_MODE + RC_SequenceUpdate_sequenceHandle;
 
-    // Internal Data Update
+#  if ALG_DILITHIUM
+    if(object->attributes.dlhsSeq == SET)
+    {
+        DLHS_STATE* ds = &hashObject->state.dlhsState;
+        if(in->buffer.t.size == 0 || in->buffer.t.size > ds->remaining)
+            return TPM_RCS_SIZE + RC_SequenceUpdate_buffer;
 
+        int prc = _plat__Dilithium_Update(
+            ds->ctx_id, in->buffer.t.buffer, in->buffer.t.size);
+        if(prc != 0)
+            return TPM_RC_FAILURE;
+
+        ds->remaining -= in->buffer.t.size;
+        return TPM_RC_SUCCESS;
+    }
+    if(object->attributes.dlhvSeq == SET)
+    {
+        DLHV_STATE* ds = &hashObject->state.dlhvState;
+        if(in->buffer.t.size == 0 || in->buffer.t.size > ds->remaining)
+            return TPM_RCS_SIZE + RC_SequenceUpdate_buffer;
+
+        int prc = _plat__Dilithium_Update(
+            ds->ctx_id, in->buffer.t.buffer, in->buffer.t.size);
+        if(prc != 0)
+            return TPM_RC_FAILURE;
+
+        // Update the ticket hash in parallel (for TPMT_TK_VERIFIED)
+        CryptDigestUpdate(&ds->ticketHash, in->buffer.t.size, in->buffer.t.buffer);
+
+        ds->remaining -= in->buffer.t.size;
+        return TPM_RC_SUCCESS;
+    }
+#  endif  // ALG_DILITHIUM
+
+    // Internal Data Update
     if(object->attributes.eventSeq == SET)
     {
         // Update event sequence object

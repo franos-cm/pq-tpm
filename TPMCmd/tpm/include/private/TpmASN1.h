@@ -12,11 +12,15 @@
 
 //** Defined Constants
 //*** ASN.1 Universal Types (Class 00b)
-#define ASN1_EOC               0x00
-#define ASN1_BOOLEAN           0x01
-#define ASN1_INTEGER           0x02
-#define ASN1_BITSTRING         0x03
-#define ASN1_OCTET_STRING      0x04
+#define ASN1_EOC 0x00
+#ifndef ASN1_BOOLEAN
+#  define ASN1_BOOLEAN 0x01
+#endif
+#define ASN1_INTEGER   0x02
+#define ASN1_BITSTRING 0x03
+#ifndef ASN1_OCTET_STRING
+#  define ASN1_OCTET_STRING 0x04
+#endif
 #define ASN1_NULL              0x05
 #define ASN1_OBJECT_IDENTIFIER 0x06
 #define ASN1_OBJECT_DESCRIPTOR 0x07
@@ -26,7 +30,6 @@
 #define ASN1_EMBEDDED          0x0B
 #define ASN1_UTF8String        0x0C
 #define ASN1_RELATIVE_OID      0x0D
-#define ASN1_SEQUENCE          0x10  // Primitive + Constructed + 0x10
 #define ASN1_SET               0x11  // Primitive + Constructed + 0x11
 #define ASN1_NumericString     0x12
 #define ASN1_PrintableString   0x13
@@ -44,7 +47,7 @@
 
 #define ASN1_APPLICAIION_SPECIFIC 0xA0
 
-#define ASN1_CONSTRUCTED_SEQUENCE (ASN1_SEQUENCE + ASN1_CONSTRUCTED)
+#define ASN1_CONSTRUCTED_SEQUENCE (0x10 + ASN1_CONSTRUCTED)
 
 #define MAX_DEPTH 10  // maximum push depth for marshaling context.
 

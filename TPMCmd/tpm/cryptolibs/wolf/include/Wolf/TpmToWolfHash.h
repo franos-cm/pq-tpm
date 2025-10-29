@@ -35,7 +35,7 @@
 
 #define tpmHashStateSHA1_t   wc_Sha
 #define tpmHashStateSHA256_t wc_Sha256
-#define tpmHashStateSHA384_t wc_Sha512
+#define tpmHashStateSHA384_t wc_Sha384
 #define tpmHashStateSHA512_t wc_Sha512
 
 #if ALG_SM3
@@ -117,30 +117,77 @@ typedef const BYTE* PCBYTE;
 // functions. These need to be translated to the function names of the library.
 //          Internal                    External
 //          Designation                 Designation
-#  define tpmHashStart_SHA1         wc_InitSha
-#  define tpmHashData_SHA1          wc_ShaUpdate
-#  define tpmHashEnd_SHA1           wc_ShaFinal
-#  define tpmHashStateCopy_SHA1     memcpy
-#  define tpmHashStateExport_SHA1   memcpy
-#  define tpmHashStateImport_SHA1   memcpy
-#  define tpmHashStart_SHA256       wc_InitSha256
-#  define tpmHashData_SHA256        wc_Sha256Update
-#  define tpmHashEnd_SHA256         wc_Sha256Final
-#  define tpmHashStateCopy_SHA256   memcpy
-#  define tpmHashStateExport_SHA256 memcpy
-#  define tpmHashStateImport_SHA256 memcpy
-#  define tpmHashStart_SHA384       wc_InitSha384
-#  define tpmHashData_SHA384        wc_Sha384Update
-#  define tpmHashEnd_SHA384         wc_Sha384Final
-#  define tpmHashStateCopy_SHA384   memcpy
-#  define tpmHashStateExport_SHA384 memcpy
-#  define tpmHashStateImport_SHA384 memcpy
-#  define tpmHashStart_SHA512       wc_InitSha512
-#  define tpmHashData_SHA512        wc_Sha512Update
-#  define tpmHashEnd_SHA512         wc_Sha512Final
-#  define tpmHashStateCopy_SHA512   memcpy
-#  define tpmHashStateExport_SHA512 memcpy
-#  define tpmHashStateImport_SHA512 memcpy
+
+#  ifdef tpmHashStart_SHA1
+#    undef tpmHashStart_SHA1
+#    undef tpmHashData_SHA1
+#    undef tpmHashEnd_SHA1
+#    undef tpmHashStateCopy_SHA1
+#    undef tpmHashStateExport_SHA1
+#    undef tpmHashStateImport_SHA1
+#  endif
+#  ifdef tpmHashStart_SHA256
+#    undef tpmHashStart_SHA256
+#    undef tpmHashData_SHA256
+#    undef tpmHashEnd_SHA256
+#    undef tpmHashStateCopy_SHA256
+#    undef tpmHashStateExport_SHA256
+#    undef tpmHashStateImport_SHA256
+#  endif
+#  ifdef tpmHashStart_SHA384
+#    undef tpmHashStart_SHA384
+#    undef tpmHashData_SHA384
+#    undef tpmHashEnd_SHA384
+#    undef tpmHashStateCopy_SHA384
+#    undef tpmHashStateExport_SHA384
+#    undef tpmHashStateImport_SHA384
+#  endif
+#  ifdef tpmHashStart_SHA512
+#    undef tpmHashStart_SHA512
+#    undef tpmHashData_SHA512
+#    undef tpmHashEnd_SHA512
+#    undef tpmHashStateCopy_SHA512
+#    undef tpmHashStateExport_SHA512
+#    undef tpmHashStateImport_SHA512
+#  endif
+
+#  if !defined(WOLF_HASH_VOID_WRAPPERS)
+
+/* Default: map internal names directly to wolfCrypt functions (int return). */
+#    if ALG_SHA1
+#      define tpmHashStart_SHA1       wc_InitSha
+#      define tpmHashData_SHA1        wc_ShaUpdate
+#      define tpmHashEnd_SHA1         wc_ShaFinal
+#      define tpmHashStateCopy_SHA1   memcpy
+#      define tpmHashStateExport_SHA1 memcpy
+#      define tpmHashStateImport_SHA1 memcpy
+#    endif
+#    if ALG_SHA256
+#      define tpmHashStart_SHA256       wc_InitSha256
+#      define tpmHashData_SHA256        wc_Sha256Update
+#      define tpmHashEnd_SHA256         wc_Sha256Final
+#      define tpmHashStateCopy_SHA256   memcpy
+#      define tpmHashStateExport_SHA256 memcpy
+#      define tpmHashStateImport_SHA256 memcpy
+#    endif
+#    if ALG_SHA384
+#      define tpmHashStart_SHA384       wc_InitSha384
+#      define tpmHashData_SHA384        wc_Sha384Update
+#      define tpmHashEnd_SHA384         wc_Sha384Final
+#      define tpmHashStateCopy_SHA384   memcpy
+#      define tpmHashStateExport_SHA384 memcpy
+#      define tpmHashStateImport_SHA384 memcpy
+#    endif
+#    if ALG_SHA512
+#      define tpmHashStart_SHA512       wc_InitSha512
+#      define tpmHashData_SHA512        wc_Sha512Update
+#      define tpmHashEnd_SHA512         wc_Sha512Final
+#      define tpmHashStateCopy_SHA512   memcpy
+#      define tpmHashStateExport_SHA512 memcpy
+#      define tpmHashStateImport_SHA512 memcpy
+#    endif
+
+#  endif /* !WOLF_HASH_VOID_WRAPPERS */
 
 #endif  // _CRYPT_HASH_C_
 

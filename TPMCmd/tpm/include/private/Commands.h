@@ -382,5 +382,17 @@
 #if CC_Vendor_TCG_Test
 #  include "Vendor_TCG_Test_fp.h"
 #endif
+#if CC_HashSignStart
+#  include "HashSignStart_fp.h"
+#endif
+#if CC_HashSignFinish
+#  include "HashSignFinish_fp.h"
+#endif
+#if CC_HashVerifyStart
+#  include "HashVerifyStart_fp.h"
+#endif
+#if CC_HashVerifyFinish
+#  include "HashVerifyFinish_fp.h"
+#endif
 
 #endif  // _COMMANDS_H_

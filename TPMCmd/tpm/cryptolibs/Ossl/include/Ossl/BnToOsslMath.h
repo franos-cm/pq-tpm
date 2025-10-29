@@ -34,8 +34,8 @@ struct bignum_st
     int flags;
 };
 #else
-#  define EC_POINT_get_affine_coordinates EC_POINT_get_affine_coordinates_GFp
-#  define EC_POINT_set_affine_coordinates EC_POINT_set_affine_coordinates_GFp
+// #  define EC_POINT_get_affine_coordinates EC_POINT_get_affine_coordinates_GFp
+// #  define EC_POINT_set_affine_coordinates EC_POINT_set_affine_coordinates_GFp
 #endif  // OPENSSL_VERSION_NUMBER
 
 //** Macros and Defines

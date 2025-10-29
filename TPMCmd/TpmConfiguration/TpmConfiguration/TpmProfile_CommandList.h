@@ -161,5 +161,9 @@
 #define CC_NV_DefineSpace2            CC_YES
 #define CC_NV_ReadPublic2             CC_YES
 #define CC_SetCapability              CC_NO
+#define CC_HashSignStart              CC_YES
+#define CC_HashSignFinish             CC_YES
+#define CC_HashVerifyStart            CC_YES
+#define CC_HashVerifyFinish           CC_YES
 
 #endif  // _TPM_PROFILE_COMMAND_LIST_H_

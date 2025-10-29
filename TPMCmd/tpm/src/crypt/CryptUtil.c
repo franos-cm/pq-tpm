@@ -473,6 +473,9 @@ BOOL CryptIsAsymAlgorithm(TPM_ALG_ID algID  // IN: algorithm ID
 #if ALG_ECC
         case TPM_ALG_ECC:
 #endif
+#if ALG_DILITHIUM
+        case TPM_ALG_DILITHIUM:
+#endif
             return TRUE;
             break;
         default:
@@ -1093,6 +1096,12 @@ CryptCreateObject(OBJECT*                object,  // IN: new object structure po
             result = CryptEccGenerateKey(publicArea, sensitive, rand);
             break;
 #endif  // ALG_ECC
+#if ALG_DILITHIUM
+        // Create Dilithium key
+        case TPM_ALG_DILITHIUM:
+            result = CryptDilithiumGenerateKey(publicArea, sensitive, rand);
+            break;
+#endif  // ALG_DILITHIUM
         case TPM_ALG_SYMCIPHER:
             result = CryptGenerateKeySymmetric(
                 publicArea, sensitive, sensitiveCreate, rand);
@@ -1478,6 +1487,11 @@ CryptSign(OBJECT*          signKey,     // IN: signing key
                 signature, signKey, digest, (TPMT_ECC_SCHEME*)signScheme, NULL);
             break;
 #endif  // ALG_ECC
+#if ALG_DILITHIUM
+        case TPM_ALG_DILITHIUM:
+            // result = CryptDilithiumSign(signature, signKey, digest);
+            break;
+#endif  // ALG_DILITHIUM
         case TPM_ALG_KEYEDHASH:
             result = CryptHmacSign(signature, signKey, digest);
             break;
@@ -1539,6 +1553,11 @@ CryptValidateSignature(TPMI_DH_OBJECT  keyHandle,  // IN: The handle of sign key
             break;
 #endif  // ALG_ECC
 
+#if ALG_DILITHIUM
+        case TPM_ALG_DILITHIUM:
+            // result = CryptDilithiumValidateSignature(signature, signObject, digest);
+            break;
+#endif  // ALG_DILITHIUM
         case TPM_ALG_KEYEDHASH:
             if(signObject->attributes.publicOnly)
                 result = TPM_RCS_HANDLE;
@@ -1689,6 +1708,23 @@ CryptValidateKeys(TPMT_PUBLIC*    publicArea,
             break;
         }
 #endif
+#if ALG_DILITHIUM
+        case TPM_ALG_DILITHIUM:
+        {
+            // TODO: we probably should do more than just size checking
+            // Basic size checks for public/private blobs
+            if(publicArea->unique.dilithium.t.size == 0
+               || publicArea->unique.dilithium.t.size > DILITHIUM_MAX_PUBLIC_KEY)
+                return TPM_RCS_KEY + blamePublic;
+            if(sensitive != NULL)
+            {
+                if(sensitive->sensitive.dilithium.t.size == 0
+                   || sensitive->sensitive.dilithium.t.size > DILITHIUM_MAX_PRIVATE_KEY)
+                    return TPM_RCS_KEY_SIZE + blameSensitive;
+            }
+            break;
+        }
+#endif  // ALG_DILITHIUM
         default:
             // Checks for SYMCIPHER and KEYEDHASH are largely the same
             // If public area has a nameAlg, then validate the public area size

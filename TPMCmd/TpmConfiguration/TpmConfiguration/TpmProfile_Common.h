@@ -8,6 +8,10 @@
 
 #ifndef _TPM_PROFILE_COMMON_H_
 #define _TPM_PROFILE_COMMON_H_
+
+// Import to get memory map from SoC
+#include <generated/mem.h>
+
 // YES & NO defined by TpmBuildSwitches.h
 #if (YES != 1 || NO != 0)
 #  error YES or NO incorrectly set
@@ -45,7 +49,7 @@
 
 #define     SM4_128                     (NO  * ALG_SM4)
 
-#define ALG_CAMELLIA                ALG_YES
+#define ALG_CAMELLIA                ALG_NO
 
 #define     CAMELLIA_128                (YES * ALG_CAMELLIA)
 #define     CAMELLIA_192                (NO  * ALG_CAMELLIA)
@@ -101,9 +105,9 @@
 #define     ECC_NIST_P256                   (YES * ALG_ECC)
 #define     ECC_NIST_P384                   (YES * ALG_ECC)
 #define     ECC_NIST_P521                   (YES * ALG_ECC)
-#define     ECC_BN_P256                     (YES * ALG_ECC)
-#define     ECC_BN_P638                     (YES * ALG_ECC)
-#define     ECC_SM2_P256                    (YES * ALG_ECC)
+#define     ECC_BN_P256                     (NO  * ALG_ECC)
+#define     ECC_BN_P638                     (NO  * ALG_ECC)
+#define     ECC_SM2_P256                    (NO  * ALG_ECC)
 
 #define     ECC_BP_P256_R1                  (NO * ALG_ECC)
 #define     ECC_BP_P384_R1                  (NO * ALG_ECC)
@@ -150,6 +154,11 @@
 #define ALG_KDF1_SP800_108                  ALG_YES
 
 //***********************************************
+// Defines for PQC
+//***********************************************
+#define ALG_DILITHIUM                       ALG_YES
+
+//***********************************************
 // Defines for Obscuration/MISC/compatibility
 //***********************************************
 #define ALG_XOR                             ALG_YES
@@ -157,7 +166,7 @@
 //***********************************************
 // Defines controlling ACT
 //***********************************************
-#define ACT_SUPPORT                         YES
+#define ACT_SUPPORT                         NO
 #define RH_ACT_0                                (YES * ACT_SUPPORT)
 #define RH_ACT_1                                ( NO * ACT_SUPPORT)
 #define RH_ACT_2                                ( NO * ACT_SUPPORT)
@@ -195,8 +204,9 @@
 // When using PC CRB, the page size for both commands and
 // control registers is 4k.  The command buffer starts at
 // offset 0x80, so the net size available is:
-#define  MAX_COMMAND_SIZE               (4096-0x80)
-#define  MAX_RESPONSE_SIZE              (4096-0x80)
+// NOTE: value changed to be defined by the SoC memory map
+#define  MAX_COMMAND_SIZE               (TPM_CMD_BUFFER_SIZE-0x80)
+#define  MAX_RESPONSE_SIZE              (TPM_CMD_BUFFER_SIZE-0x80)
 
 //***********************************************
 // Vendor Info

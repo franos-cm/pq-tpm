@@ -2,6 +2,10 @@
 
 #include "Tpm.h"
 #include "Context_spt_fp.h"
+#if ALG_DILITHIUM
+#  include "private/prototypes/CryptDilithium_fp.h"
+#  include "private/DilithiumSequence.h"
+#endif
 
 //** Functions
 
@@ -190,6 +194,25 @@ void SequenceDataExport(
     HASH_OBJECT_BUFFER* exportObject  // OUT: a sequence context in a buffer
 )
 {
+#if ALG_DILITHIUM
+    // If this is a Dilithium HashSign sequence, export its vendor state
+    if(object->attributes.dlhsSeq == SET)
+    {
+        size_t off = (BYTE*)&object->state.dlhsState - (BYTE*)object;
+        BYTE*  out = &((BYTE*)exportObject)[off];
+        CryptExportHashSignState(&object->state.dlhsState, out);
+        return;
+    }
+    // Verify sequence
+    if(object->attributes.dlhvSeq == SET)
+    {
+        size_t off = (BYTE*)&object->state.dlhvState - (BYTE*)object;
+        BYTE*  out = &((BYTE*)exportObject)[off];
+        CryptExportHashVerifyState(&object->state.dlhvState, out);
+        return;
+    }
+#endif
+
     // If the hash object is not an event, then only one hash context is needed
     int count = (object->attributes.eventSeq) ? HASH_COUNT : 1;
 
@@ -217,6 +240,26 @@ void SequenceDataImport(
     HASH_OBJECT_BUFFER* exportObject  // IN/OUT: a sequence context in a buffer
 )
 {
+#if ALG_DILITHIUM
+    // Detect Dilithium vendor state in the buffer and import it
+    if(object->attributes.dlhsSeq == SET)
+    {
+        size_t     off = (BYTE*)&object->state.dlhsState - (BYTE*)object;
+        DLHS_STATE tmp;
+        CryptImportHashSignState(&tmp, &((const BYTE*)exportObject)[off]);
+        object->state.dlhsState = tmp;
+        return;
+    }
+    if(object->attributes.dlhvSeq == SET)
+    {
+        size_t     off = (BYTE*)&object->state.dlhvState - (BYTE*)object;
+        DLHV_STATE tmp;
+        CryptImportHashVerifyState(&tmp, &((const BYTE*)exportObject)[off]);
+        object->state.dlhvState = tmp;
+        return;
+    }
+#endif
+
     // If the hash object is not an event, then only one hash context is needed
     int count = (object->attributes.eventSeq) ? HASH_COUNT : 1;
 

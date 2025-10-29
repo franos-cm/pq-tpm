@@ -96,8 +96,11 @@ BOOL ObjectIsSequence(OBJECT* object  // IN: handle to be checked
 )
 {
     pAssert(object != NULL);
-    return (object->attributes.hmacSeq == SET || object->attributes.hashSeq == SET
-            || object->attributes.eventSeq == SET);
+    return (object->attributes.hmacSeq == SET
+            || object->attributes.hashSeq == SET
+            || object->attributes.eventSeq == SET
+            || object->attributes.dlhsSeq == SET
+            || object->attributes.dlhvSeq == SET);
 }
 
 //*** HandleToObject()
@@ -425,6 +428,9 @@ static HASH_OBJECT* AllocateSequenceSlot(
         // This has no name algorithm and the name is the Empty Buffer
         object->nameAlg = TPM_ALG_NULL;
 
+        // Zero the sequence union state (hash/hmac/dlhs)
+        MemorySet(&object->state, 0, sizeof(object->state));
+
         // A sequence object is considered to be in the NULL hierarchy so it should
         // be marked as temporary so that it can't be persisted
         object->attributes.temporary = SET;
@@ -531,6 +537,46 @@ ObjectCreateEventSequence(TPM2B_AUTH*     auth,      // IN: authValue
     return TPM_RC_SUCCESS;
 }
 
+TPM_RC
+ObjectCreateDLHSSequence(TPM2B_AUTH*     auth,      // IN: authValue
+                         TPMI_DH_OBJECT* newHandle) // OUT: sequence handle
+{
+    HASH_OBJECT* hashObject = AllocateSequenceSlot(newHandle, auth);
+    if(hashObject == NULL)
+        return TPM_RC_OBJECT_MEMORY;
+
+    // Mark as Dilithium sequence, not event/hash/hmac
+    hashObject->attributes.dlhsSeq = SET;
+    // Ensure no standard seq bits are set
+    hashObject->attributes.eventSeq = CLEAR;
+    hashObject->attributes.hashSeq  = CLEAR;
+    hashObject->attributes.hmacSeq  = CLEAR;
+    hashObject->attributes.dlhvSeq = CLEAR;
+
+    // Union was zeroed in AllocateSequenceSlot; no crypt state to init
+    return TPM_RC_SUCCESS;
+}
+
+TPM_RC
+ObjectCreateDLHVSequence(TPM2B_AUTH*     auth,      // IN: authValue
+                         TPMI_DH_OBJECT* newHandle) // OUT: sequence handle
+{
+    HASH_OBJECT* hashObject = AllocateSequenceSlot(newHandle, auth);
+    if(hashObject == NULL)
+        return TPM_RC_OBJECT_MEMORY;
+
+    // Mark as Dilithium verify sequence only
+    hashObject->attributes.dlhvSeq = SET;
+    // Ensure no standard seq bits are set
+    hashObject->attributes.dlhsSeq = CLEAR;
+    hashObject->attributes.eventSeq = CLEAR;
+    hashObject->attributes.hashSeq  = CLEAR;
+    hashObject->attributes.hmacSeq  = CLEAR;
+
+    // ticketHash will be initialized by Start; union was zeroed at allocate
+    return TPM_RC_SUCCESS;
+}
+
 //*** ObjectTerminateEvent()
 // This function is called to close out the event sequence and clean up the hash
 // context states.
@@ -602,6 +648,11 @@ void FlushObject(TPMI_DH_OBJECT handle  // IN: handle to be freed
     UINT32 index = handle - TRANSIENT_FIRST;
     //
     pAssert(index < MAX_LOADED_OBJECTS);
+
+    // Clear sequence/hash/hmac/dlhs union for hygiene
+    MemorySet(&((HASH_OBJECT*)&s_objects[index])->state,
+              0, sizeof(((HASH_OBJECT*)&s_objects[index])->state));
+
     // Clear all the object attributes
     MemorySet((BYTE*)&(s_objects[index].attributes), 0, sizeof(OBJECT_ATTRIBUTES));
     return;

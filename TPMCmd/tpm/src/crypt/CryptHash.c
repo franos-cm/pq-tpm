@@ -9,11 +9,162 @@
 #include "CryptHash_fp.h"
 #include "CryptHash.h"
 #include "OIDs.h"
+#include <string.h>
+
+#define WOLF_HASH_VOID_WRAPPERS
+#if ALG_SHA1
+#  undef tpmHashStart_SHA1
+#  undef tpmHashData_SHA1
+#  undef tpmHashEnd_SHA1
+#  undef tpmHashStateCopy_SHA1
+#  undef tpmHashStateExport_SHA1
+#  undef tpmHashStateImport_SHA1
+static inline void tpmHashStart_SHA1(ANY_HASH_STATE* s)
+{
+    (void)wc_InitSha(&s->Sha1);
+}
+static inline void tpmHashData_SHA1(ANY_HASH_STATE* s, const BYTE* b, size_t n)
+{
+    (void)wc_ShaUpdate(&s->Sha1, b, (word32)n);
+}
+static inline void tpmHashEnd_SHA1(ANY_HASH_STATE* s, BYTE* out)
+{
+    (void)wc_ShaFinal(&s->Sha1, out);
+}
+static inline void tpmHashStateCopy_SHA1(
+    ANY_HASH_STATE* to, const ANY_HASH_STATE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+static inline void tpmHashStateExport_SHA1(
+    BYTE* to, const ANY_HASH_STATE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+static inline void tpmHashStateImport_SHA1(
+    ANY_HASH_STATE* to, const BYTE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+#endif
+
+#if ALG_SHA256
+#  undef tpmHashStart_SHA256
+#  undef tpmHashData_SHA256
+#  undef tpmHashEnd_SHA256
+#  undef tpmHashStateCopy_SHA256
+#  undef tpmHashStateExport_SHA256
+#  undef tpmHashStateImport_SHA256
+static inline void tpmHashStart_SHA256(ANY_HASH_STATE* s)
+{
+    (void)wc_InitSha256(&s->Sha256);
+}
+static inline void tpmHashData_SHA256(ANY_HASH_STATE* s, const BYTE* b, size_t n)
+{
+    (void)wc_Sha256Update(&s->Sha256, b, (word32)n);
+}
+static inline void tpmHashEnd_SHA256(ANY_HASH_STATE* s, BYTE* out)
+{
+    (void)wc_Sha256Final(&s->Sha256, out);
+}
+static inline void tpmHashStateCopy_SHA256(
+    ANY_HASH_STATE* to, const ANY_HASH_STATE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+static inline void tpmHashStateExport_SHA256(
+    BYTE* to, const ANY_HASH_STATE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+static inline void tpmHashStateImport_SHA256(
+    ANY_HASH_STATE* to, const BYTE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+#endif
+
+#if ALG_SHA384
+#  undef tpmHashStart_SHA384
+#  undef tpmHashData_SHA384
+#  undef tpmHashEnd_SHA384
+#  undef tpmHashStateCopy_SHA384
+#  undef tpmHashStateExport_SHA384
+#  undef tpmHashStateImport_SHA384
+static inline void tpmHashStart_SHA384(ANY_HASH_STATE* s)
+{
+    (void)wc_InitSha384(&s->Sha384);
+}
+static inline void tpmHashData_SHA384(ANY_HASH_STATE* s, const BYTE* b, size_t n)
+{
+    (void)wc_Sha384Update(&s->Sha384, b, (word32)n);
+}
+static inline void tpmHashEnd_SHA384(ANY_HASH_STATE* s, BYTE* out)
+{
+    (void)wc_Sha384Final(&s->Sha384, out);
+}
+static inline void tpmHashStateCopy_SHA384(
+    ANY_HASH_STATE* to, const ANY_HASH_STATE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+static inline void tpmHashStateExport_SHA384(
+    BYTE* to, const ANY_HASH_STATE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+static inline void tpmHashStateImport_SHA384(
+    ANY_HASH_STATE* to, const BYTE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+#endif
+
+#if ALG_SHA512
+#  undef tpmHashStart_SHA512
+#  undef tpmHashData_SHA512
+#  undef tpmHashEnd_SHA512
+#  undef tpmHashStateCopy_SHA512
+#  undef tpmHashStateExport_SHA512
+#  undef tpmHashStateImport_SHA512
+static inline void tpmHashStart_SHA512(ANY_HASH_STATE* s)
+{
+    (void)wc_InitSha512(&s->Sha512);
+}
+static inline void tpmHashData_SHA512(ANY_HASH_STATE* s, const BYTE* b, size_t n)
+{
+    (void)wc_Sha512Update(&s->Sha512, b, (word32)n);
+}
+static inline void tpmHashEnd_SHA512(ANY_HASH_STATE* s, BYTE* out)
+{
+    (void)wc_Sha512Final(&s->Sha512, out);
+}
+static inline void tpmHashStateCopy_SHA512(
+    ANY_HASH_STATE* to, const ANY_HASH_STATE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+static inline void tpmHashStateExport_SHA512(
+    BYTE* to, const ANY_HASH_STATE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+static inline void tpmHashStateImport_SHA512(
+    ANY_HASH_STATE* to, const BYTE* from, size_t sz)
+{
+    (void)memcpy(to, from, sz);
+}
+#endif
 
 // Instance each of the hash descriptors based on the implemented algorithms
 FOR_EACH_HASH(HASH_DEF_TEMPLATE)
 // Instance a 'null' def.
-HASH_DEF NULL_Def = {{0}};
+HASH_DEF NULL_Def = {.method      = {0},
+                     .blockSize   = 0,
+                     .digestSize  = 0,
+                     .contextSize = 0,
+                     .hashAlg     = TPM_ALG_NULL,
+                     .OID         = NULL};
 
 // Create a table of pointers to the defined hash definitions
 #define HASH_DEF_ENTRY(HASH, Hash) &Hash##_Def,

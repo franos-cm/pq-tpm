@@ -1,23 +1,15 @@
-# Official TPM 2.0 Reference Implementation #
+# Overview
 
+This project is an adaptation of the [official TPM 2.0 reference implementation](https://github.com/microsoft/ms-tpm-20-ref) (version 183), aimed at adding support for the CRYSTALS-Dilithium signature scheme.
 
-- [Official TPM 2.0 Reference Implementation (by Microsoft)](#official-tpm-20-reference-implementation-by-microsoft)
-  - [Build Status](#build-status)
-  - [Introduction](#introduction)
-  - [Architecture Introduction](#architecture-introduction)
-  - [Build Instructions](#build-instructions)
+Differently from the original repository, this one is not supposed to be a stand-alone project that can be run as a software simulation. Instead, this repository should be understood as part of [this larger project](https://github.com/franos-cm/project-petalite), and it is meant to be a library for firmware running on a baremetal RISC-V host. As such, the build process described in the original repository will not work here as originally intended.
 
-## Introduction
-This is the official TCG reference implementation of the [TPM 2.0 Specification](https://trustedcomputinggroup.org/tpm-library-specification). The project contains complete source code of the reference implementation with various [Build Options](#build-instructions).
+We recommend reading the original repository to better understand the TPM architecture and its code structure.
 
-This repository includes a  [TPM 2.0 simulator](TPMCmd/Simulator) that emulates a TPM 2.0 device and can be accessed via a custom TCP based protocol.  This allows experimentation and testing of the reference code.  The simplest way to work with the simulator is to use a [TSS library](https://github.com/Microsoft/TSS.MSR) for the programming language of your choice - C#/.Net, C++, Java, Python, JavaScript/Node.js are currently supported. The C language TSS implementing the TCG's TSS API specification is available [here](https://github.com/tpm2-software/tpm2-tss).
+# Changes
 
-## Architecture Introduction
-An explanation of the architecture for the TPM Reference Code.
+Two main types of changes were made to the codebase. The first type of change was so the TPM library would work using wolfSSL instead of OpenSSL. In theory, the original code already had *some* support for wolfSSL (as per the original documentation); in practice, compilation would fail when using the wolfSSL bindings.
 
-See [Architecture Intro](docs/architecture/Introduction.md)
+The remaining, more laborious, changes were to either add new (vendor-specific) commands, or modify existing ones, so that all three Dilithium operations — `KEYGEN`, `SIGN`, `VERIFY` — are supported by the TPM.
 
-## Build Instructions
-The supported build environments are not guaranteed and subject to change.
-
-See [Build Intro](docs/BuildSystems/BuildIntro.md)
+The Dilithium operations themselves are not part of this codebase; instead, `__plat` HAL function calls to a Dilithium hardware accelerator are performed. The implementation of these functions, and the accelerator itself, are part of the scope of the other (aforementioned) project.

@@ -1,5 +1,6 @@
 #include "Tpm.h"
 #include "HashVerifyStart_fp.h"
+#include "platform_interface/tpm_to_platform_interface.h"
 
 TPM_RC TPM2_HashVerifyStart(HashVerifyStart_In* in, HashVerifyStart_Out* out)
 {
@@ -32,10 +33,21 @@ TPM_RC TPM2_HashVerifyStart(HashVerifyStart_In* in, HashVerifyStart_Out* out)
 
     uint8_t     level   = pub->parameters.dilithiumDetail.securityLevel;
     uint32_t    ctx_id  = 0;
+
+#ifdef DILITHIUM_HW_ACCELERATOR
     uint32_t    prc     = _plat__Dilithium_HashVerifyStart(
         level, in->msgLen, pk_buf, pk_len, sig_buf, sig_len, &ctx_id);
     if(prc != 0)
         return TPM_RC_FAILURE;
+#else
+    // Software mode: Reset buffer and cache PK/Sig
+    dilithium_sw_msg_len = 0;
+    if (pk_len > sizeof(dilithium_sw_pk_cache) || sig_len > sizeof(dilithium_sw_sig_cache))
+        return TPM_RC_FAILURE;
+    memcpy(dilithium_sw_pk_cache, pk_buf, pk_len);
+    memcpy(dilithium_sw_sig_cache, sig_buf, sig_len);
+    ctx_id = 1;
+#endif
 
     // Create verify sequence
     TPM2B_AUTH zeroAuth = {.t = {.size = 0}};

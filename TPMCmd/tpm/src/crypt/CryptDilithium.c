@@ -4,6 +4,10 @@
 #include "platform_interface/tpm_to_platform_interface.h"
 #include "CryptDilithium_fp.h"
 
+#ifndef DILITHIUM_HW_ACCELERATOR
+#include "dilithium-ref.h"
+#endif
+
 #if ALG_DILITHIUM
 
 // Generate keypair: fills publicArea->unique.dilithium and sensitive->sensitive.dilithium
@@ -30,11 +34,46 @@ TPM_RC CryptDilithiumGenerateKey(
     UINT16   pub_cap = (UINT16)sizeof(publicArea->unique.dilithium.t.buffer);
     UINT16   prv_cap = (UINT16)sizeof(sensitive->sensitive.dilithium.t.buffer);
 
+#ifdef DILITHIUM_HW_ACCELERATOR
     uint32_t prc     = _plat__Dilithium_KeyGen(level,
                                            publicArea->unique.dilithium.t.buffer,
                                            &pub_cap,
                                            sensitive->sensitive.dilithium.t.buffer,
                                            &prv_cap);
+#else
+    uint32_t prc = -1;
+    switch (level) {
+        case 2:
+            prc = pqcrystals_dilithium2_ref_keypair(publicArea->unique.dilithium.t.buffer,
+                                                     sensitive->sensitive.dilithium.t.buffer);
+            break;
+        case 3:
+            prc = pqcrystals_dilithium3_ref_keypair(publicArea->unique.dilithium.t.buffer,
+                                                     sensitive->sensitive.dilithium.t.buffer);
+            break;
+        case 5:
+            prc = pqcrystals_dilithium5_ref_keypair(publicArea->unique.dilithium.t.buffer,
+                                                     sensitive->sensitive.dilithium.t.buffer);
+            break;
+        default:
+            return TPM_RC_VALUE;
+    }
+
+    // Update sizes (fixed per level)
+    if (prc == 0) {
+        if (level == 2) {
+            pub_cap = pqcrystals_dilithium2_PUBLICKEYBYTES;
+            prv_cap = pqcrystals_dilithium2_SECRETKEYBYTES;
+        } else if (level == 3) {
+            pub_cap = pqcrystals_dilithium3_PUBLICKEYBYTES;
+            prv_cap = pqcrystals_dilithium3_SECRETKEYBYTES;
+        } else if (level == 5) {
+            pub_cap = pqcrystals_dilithium5_PUBLICKEYBYTES;
+            prv_cap = pqcrystals_dilithium5_SECRETKEYBYTES;
+        }
+    }
+#endif
+
     if(prc != 0)
         return TPM_RC_FAILURE;
 

@@ -16,11 +16,11 @@ TPM_RC CryptDilithiumGenerateKey(
         return TPM_RCS_ATTRIBUTES;
 
     // symmetric must be NULL for non-parent signing keys
-    if(publicArea->parameters.asymDetail.symmetric.algorithm != TPM_ALG_NULL)
+    if(publicArea->parameters.dilithiumDetail.symmetric.algorithm != TPM_ALG_NULL)
         return TPM_RCS_SYMMETRIC;
 
     // Optional: scheme must be NULL (no scheme-specific hashing inside Dilithium)
-    if(publicArea->parameters.asymDetail.scheme.scheme != TPM_ALG_NULL)
+    if(publicArea->parameters.dilithiumDetail.scheme.scheme != TPM_ALG_NULL)
         return TPM_RCS_SCHEME;
 
     UINT8 level = publicArea->parameters.dilithiumDetail.securityLevel;

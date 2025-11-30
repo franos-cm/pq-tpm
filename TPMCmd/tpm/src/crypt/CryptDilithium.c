@@ -5,7 +5,13 @@
 #include "CryptDilithium_fp.h"
 
 #ifndef DILITHIUM_HW_ACCELERATOR
-#include "dilithium-ref.h"
+#include "dilithium_ref.h"
+
+// SW-only caches for streaming Dilithium operations (single definition).
+UINT32 dilithium_sw_msg_len = 0;
+BYTE   dilithium_sw_pk_cache[DILITHIUM_MAX_PUBLIC_KEY]  = {0};
+BYTE   dilithium_sw_sig_cache[DILITHIUM_MAX_SIGNATURE]  = {0};
+
 #endif
 
 #if ALG_DILITHIUM

@@ -3,7 +3,8 @@
 #include "platform_interface/tpm_to_platform_interface.h"
 
 #ifndef DILITHIUM_HW_ACCELERATOR
-#include "dilithium-ref.h"
+#include "dilithium_ref.h"
+extern unsigned char dilithium_aligned_buffer[8176];
 #endif
 
 TPM_RC TPM2_HashSignFinish(HashSignFinish_In* in, HashSignFinish_Out* out)
@@ -47,7 +48,7 @@ TPM_RC TPM2_HashSignFinish(HashSignFinish_In* in, HashSignFinish_Out* out)
             prc = pqcrystals_dilithium2_ref_signature(
                 out->signature.signature.dilithium.sig.t.buffer, 
                 &sig_len_sz, 
-                dilithium_aligned_buffer, 
+                dilithium_aligned_buffer,
                 dilithium_sw_msg_len, 
                 NULL, 0, 
                 keyObj->sensitive.sensitive.dilithium.t.buffer); 

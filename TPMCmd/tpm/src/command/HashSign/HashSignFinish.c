@@ -1,5 +1,11 @@
 #include "Tpm.h"
 #include "HashSignFinish_fp.h"
+#include "platform_interface/tpm_to_platform_interface.h"
+
+#ifndef DILITHIUM_HW_ACCELERATOR
+#include "dilithium_ref.h"
+extern unsigned char dilithium_aligned_buffer[8176];
+#endif
 
 TPM_RC TPM2_HashSignFinish(HashSignFinish_In* in, HashSignFinish_Out* out)
 {
@@ -22,6 +28,8 @@ TPM_RC TPM2_HashSignFinish(HashSignFinish_In* in, HashSignFinish_Out* out)
     out->signature.signature.dilithium.hash = TPM_ALG_NULL;
 
     UINT16 sig_cap = (UINT16)sizeof(out->signature.signature.dilithium.sig.t.buffer);
+    
+#ifdef DILITHIUM_HW_ACCELERATOR
     int    prc     = _plat__Dilithium_HashSignFinish(
         ds->ctx_id,
         level,
@@ -29,6 +37,47 @@ TPM_RC TPM2_HashSignFinish(HashSignFinish_In* in, HashSignFinish_Out* out)
         keyObj->sensitive.sensitive.dilithium.t.size,
         out->signature.signature.dilithium.sig.t.buffer,
         &sig_cap);
+#else
+    int prc = -1;
+    // Intermediate variable required: ref impl expects size_t* (often 64-bit),
+    // but sig_cap is UINT16 (16-bit). Direct casting would corrupt the stack.
+    size_t sig_len_sz;
+
+    switch (level) {
+        case 2: 
+            prc = pqcrystals_dilithium2_ref_signature(
+                out->signature.signature.dilithium.sig.t.buffer, 
+                &sig_len_sz, 
+                dilithium_aligned_buffer,
+                dilithium_sw_msg_len, 
+                NULL, 0, 
+                keyObj->sensitive.sensitive.dilithium.t.buffer); 
+            break;
+        case 3: 
+            prc = pqcrystals_dilithium3_ref_signature(
+                out->signature.signature.dilithium.sig.t.buffer, 
+                &sig_len_sz, 
+                dilithium_aligned_buffer, 
+                dilithium_sw_msg_len, 
+                NULL, 0, 
+                keyObj->sensitive.sensitive.dilithium.t.buffer); 
+            break;
+        case 5: 
+            prc = pqcrystals_dilithium5_ref_signature(
+                out->signature.signature.dilithium.sig.t.buffer, 
+                &sig_len_sz, 
+                dilithium_aligned_buffer, 
+                dilithium_sw_msg_len, 
+                NULL, 0, 
+                keyObj->sensitive.sensitive.dilithium.t.buffer); 
+            break;
+    }
+    
+    if (prc == 0) {
+        sig_cap = (UINT16)sig_len_sz;
+    }
+#endif
+
     if(prc != 0)
         return TPM_RC_FAILURE;
 

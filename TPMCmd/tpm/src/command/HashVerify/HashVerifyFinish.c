@@ -1,5 +1,11 @@
 #include "Tpm.h"
 #include "HashVerifyFinish_fp.h"
+#include "platform_interface/tpm_to_platform_interface.h"
+
+#ifndef DILITHIUM_HW_ACCELERATOR
+#include "dilithium_ref.h"
+extern unsigned char dilithium_aligned_buffer[8176];
+#endif
 
 TPM_RC TPM2_HashVerifyFinish(HashVerifyFinish_In* in, HashVerifyFinish_Out* out)
 {
@@ -19,7 +25,29 @@ TPM_RC TPM2_HashVerifyFinish(HashVerifyFinish_In* in, HashVerifyFinish_Out* out)
     uint8_t  level    = keyObj->publicArea.parameters.dilithiumDetail.securityLevel;
 
     bool accepted = false;
+    
+#ifdef DILITHIUM_HW_ACCELERATOR
     uint32_t prc = _plat__Dilithium_HashVerifyFinish(ds->ctx_id, level, &accepted);
+#else
+    int sw_rc = -1;
+    switch (level) {
+        case 2: 
+            sw_rc = pqcrystals_dilithium2_ref_verify(dilithium_sw_sig_cache, pqcrystals_dilithium2_BYTES, 
+                dilithium_aligned_buffer, dilithium_sw_msg_len, NULL, 0, dilithium_sw_pk_cache); 
+            break;
+        case 3: 
+            sw_rc = pqcrystals_dilithium3_ref_verify(dilithium_sw_sig_cache, pqcrystals_dilithium3_BYTES, 
+                dilithium_aligned_buffer, dilithium_sw_msg_len, NULL, 0, dilithium_sw_pk_cache); 
+            break;
+        case 5: 
+            sw_rc = pqcrystals_dilithium5_ref_verify(dilithium_sw_sig_cache, pqcrystals_dilithium5_BYTES, 
+                dilithium_aligned_buffer, dilithium_sw_msg_len, NULL, 0, dilithium_sw_pk_cache); 
+            break;
+    }
+    accepted = (sw_rc == 0);
+    uint32_t prc = 0; // Always succeed the call, result is in accepted
+#endif
+
     if(prc != 0)
         return TPM_RC_FAILURE;
     if(!accepted)

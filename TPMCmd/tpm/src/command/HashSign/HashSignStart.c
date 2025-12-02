@@ -1,5 +1,9 @@
 #include "Tpm.h"
 #include "HashSignStart_fp.h"
+#include "platform_interface/tpm_to_platform_interface.h"
+#ifndef DILITHIUM_HW_ACCELERATOR
+#include "dilithium_ref.h"
+#endif
 
 TPM_RC TPM2_HashSignStart(HashSignStart_In* in, HashSignStart_Out* out)
 {
@@ -15,8 +19,10 @@ TPM_RC TPM2_HashSignStart(HashSignStart_In* in, HashSignStart_Out* out)
     if(in->msgLen == 0)
         return TPM_RCS_VALUE + RC_HashSignStart_msgLen;
 
-    uint8_t  level  = pub->parameters.dilithiumDetail.securityLevel;
     uint32_t ctx_id = 0;
+
+#ifdef DILITHIUM_HW_ACCELERATOR
+    uint8_t  level  = pub->parameters.dilithiumDetail.securityLevel;
     int      prc =
         _plat__Dilithium_HashSignStart(level,
                                        in->msgLen,
@@ -25,6 +31,10 @@ TPM_RC TPM2_HashSignStart(HashSignStart_In* in, HashSignStart_Out* out)
                                        &ctx_id);
     if(prc != 0)
         return TPM_RC_FAILURE;
+#else
+    // Software mode: Reset message buffer
+    dilithium_sw_msg_len = 0;
+#endif
 
     TPM2B_AUTH zeroAuth = {.t = {.size = 0}};
     TPM_RC     rc       = ObjectCreateDLHSSequence(&zeroAuth, &out->sequenceHandle);

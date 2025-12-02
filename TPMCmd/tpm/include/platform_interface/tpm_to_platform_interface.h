@@ -1,4 +1,3 @@
-
 // This file represents the functional interface that all platform libraries must
 // provide because they are called by the Core TPM library.
 #ifndef _TPM_TO_PLATFORM_INTERFACE_H_
@@ -225,6 +224,8 @@ LIB_EXPORT void _plat__TearDown();
 LIB_EXPORT uint32_t _plat__Dilithium_Update(
     uint32_t ctx_id, const uint8_t* chunk, uint16_t chunk_size);
 
+#ifdef DILITHIUM_HW_ACCELERATOR
+
 // Keygen: returns blobs for the requested security level.
 LIB_EXPORT uint32_t _plat__Dilithium_KeyGen(uint8_t   sec_level,
                                             uint8_t*  pk,
@@ -259,6 +260,7 @@ LIB_EXPORT uint32_t _plat__Dilithium_HashVerifyStart(uint8_t        sec_level,
 LIB_EXPORT uint32_t _plat__Dilithium_HashVerifyFinish(
     uint32_t ctx_id, uint8_t sec_level, bool* accepted);
 
+#endif // DILITHIUM_HW_ACCELERATOR
 #endif
 
 //** From PlatformACT.c

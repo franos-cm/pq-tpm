@@ -2462,6 +2462,15 @@ typedef TPMS_SIGNATURE_RSA TPMS_SIGNATURE_RSASSA;
 
 // --------------- Custom PQC structs ------------------
 #ifdef ALG_DILITHIUM
+
+typedef TPM_ALG_ID TPMI_ALG_DILITHIUM_SCHEME;  // (Part 2: Structures)
+
+typedef struct
+{  // (Part 2: Structures)
+    TPMI_ALG_DILITHIUM_SCHEME scheme;
+    TPMU_ASYM_SCHEME          details;
+} TPMT_DILITHIUM_SCHEME;
+
 typedef union
 {
     struct
@@ -2498,6 +2507,14 @@ typedef struct
     TPMI_ALG_HASH             hash; // TPM_ALG_NULL, kept for compat purposes
     TPM2B_SIGNATURE_DILITHIUM sig;
 } TPMS_SIGNATURE_DILITHIUM;
+
+typedef struct
+{
+    TPMT_SYM_DEF_OBJECT    symmetric;   // must be TPM_ALG_NULL for non-parent signing keys
+    TPMT_DILITHIUM_SCHEME  scheme;      // TPM_ALG_NULL (no scheme binding)
+    UINT8                  securityLevel;
+} TPMS_DILITHIUM_PARMS;
+
 #endif // ALG_DILITHIUM
 
 typedef struct
@@ -2641,14 +2658,6 @@ typedef struct
     TPMI_ECC_CURVE      curveID;
     TPMT_KDF_SCHEME     kdf;
 } TPMS_ECC_PARMS;
-
-typedef struct
-{
-    TPMT_SYM_DEF_OBJECT symmetric;   // must be TPM_ALG_NULL for non-parent signing keys
-    TPMT_ASYM_SCHEME    scheme;      // TPM_ALG_NULL (no scheme binding)
-    UINT8               securityLevel;
-    TPMI_ALG_HASH       nameHashAlg;  // optional name-domain hash, usually TPM_ALG_SHA256
-} TPMS_DILITHIUM_PARMS;
 
 typedef union
 {  // (Part 2: Structures)
